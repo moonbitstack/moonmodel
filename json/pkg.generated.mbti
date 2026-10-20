@@ -10,7 +10,7 @@ pub let defs : String
 
 pub fn document(@moonmodel.Model, known? : Array[@moonmodel.Model], draft? : String) -> Json
 
-pub fn of(@moonmodel.Model, at? : String, draft? : String) -> Json
+pub fn of(@moonmodel.Model, at? : String, draft? : String, title? : Bool) -> Json
 
 // Errors
 

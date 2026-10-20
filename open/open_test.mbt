@@ -106,3 +106,26 @@ test "what the dialects agree on is left alone" {
   assert_eq(one(field, OpenApi30), same)
   assert_eq(one(field, Swagger20), same)
 }
+
+///|
+/// A schema filed under its own name needs no title saying the same thing.
+/// A standalone one keeps it, which is why this is a parameter rather than a
+/// rule — and it is what makes the output match moonapi's byte for byte.
+test "a title is written standalone and left out under a key" {
+  let user = @moonmodel.Model::new("User", [@moonmodel.Field::new("name", Text)])
+  guard @open.of(user) is Object(alone) else { fail("not an object") }
+  assert_eq(alone.get("title"), Some(Json::string("User")))
+  guard @open.of(user, title=false) is Object(quiet) else {
+    fail("not an object")
+  }
+  assert_eq(quiet.get("title"), None)
+  guard @open.schemas([user][:]) is Object(outer) else { fail("not an object") }
+  guard outer.get("components") is Some(Object(components)) else {
+    fail("no components")
+  }
+  guard components.get("schemas") is Some(Object(named)) else {
+    fail("no schemas")
+  }
+  guard named.get("User") is Some(Object(one)) else { fail("no User") }
+  assert_eq(one.get("title"), None)
+}

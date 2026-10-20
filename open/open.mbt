@@ -42,8 +42,12 @@ pub fn Dialect::holder(self : Dialect) -> String {
 /// 3.1 is 2020-12, so it is `json`'s output with the reference prefix moved.
 /// The two older dialects are that output walked once more, undoing the three
 /// things they cannot say.
-pub fn of(model : @moonmodel.Model, dialect~ : Dialect = OpenApi31) -> Json {
-  let schema = @json.of(model, at=dialect.at())
+pub fn of(
+  model : @moonmodel.Model,
+  dialect~ : Dialect = OpenApi31,
+  title~ : Bool = true,
+) -> Json {
+  let schema = @json.of(model, at=dialect.at(), title~)
   match dialect {
     OpenApi31 => schema
     _ => older(schema, model, dialect)
@@ -61,7 +65,8 @@ pub fn schemas(
 ) -> Json {
   let named : Map[String, Json] = Map([])
   for model in models {
-    named[model.name] = of(model, dialect~)
+    // The key already names it, so no title is written here.
+    named[model.name] = of(model, dialect~, title=false)
   }
   match dialect {
     Swagger20 => Json::object(Map([("definitions", Json::object(named))]))

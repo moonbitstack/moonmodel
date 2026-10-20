@@ -19,6 +19,7 @@ pub fn of(
   model : @moonmodel.Model,
   at~ : String = defs,
   draft? : String,
+  title~ : Bool = true,
 ) -> Json {
   let out : Map[String, Json] = Map([])
   match draft {
@@ -26,7 +27,9 @@ pub fn of(
     None => ()
   }
   out["type"] = Json::string("object")
-  if model.name != "" {
+  // A schema filed under its own name needs no title saying the same thing;
+  // a standalone one does.
+  if title && model.name != "" {
     out["title"] = Json::string(model.name)
   }
   if model.doc != "" {
