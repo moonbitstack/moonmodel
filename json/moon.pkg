@@ -1,0 +1,14 @@
+// JSON Schema 2020-12: https://json-schema.org/draft/2020-12/json-schema-core
+//
+// A model becomes an object schema; a field's bounds become the keywords that
+// name them. What cannot be said in JSON Schema is nothing — of the four
+// projections this is the one that loses least, which is why the others are
+// written against it for comparison.
+import {
+  "moonbitstack/moonmodel",
+}
+
+import {
+  "moonbitstack/moonmodel/json",
+  "moonbitstack/moonmodel",
+} for "test"

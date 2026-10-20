@@ -1,0 +1,15 @@
+// What a type looks like, written down once.
+//
+// Four libraries in this family each keep their own idea of a field —
+// moonapi for request bodies and OpenAPI, moonorm for columns, moongql for
+// SDL, moonschema for validation — so a user model that must be checked,
+// documented, stored and served is written four times today.
+//
+// This package is the description and nothing else: no reading, no writing,
+// no dependencies. The projections are subpackages, so a program that wants
+// OpenAPI does not link the SQL writer.
+//
+// What this is not: MoonBit already has derive(ToJson) and derive(FromJson),
+// and core's @json carries JsonPath and JsonDecodeError. Converting a struct
+// to JSON is not missing and is not re-done here. A description says what a
+// type looks like; decoding stays the language's job.
