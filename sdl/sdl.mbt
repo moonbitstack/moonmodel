@@ -147,7 +147,11 @@ fn written(kind : @moonmodel.Type, stamp : String, bytes : String) -> String? {
     // pairs, and inventing that shape here would put a type in the schema
     // nobody declared.
     Dict(_) => None
+    // GraphQL has no anonymous object type either: every type is declared and
+    // named, so a nested model has to be given a name before it can be used.
+    Nest(_) => None
     Any => None
+    Raw(_) => None
   }
 }
 
@@ -156,7 +160,10 @@ fn untypeable(kind : @moonmodel.Type) -> String {
   match kind {
     Dict(_) =>
       "a mapping with open keys has no GraphQL type; declare a list of pairs"
+    Nest(_) =>
+      "every GraphQL type is named; give this model a name and refer to it"
     Any => "anything at all has no GraphQL type"
+    Raw(_) => "a schema written out by hand has no GraphQL type"
     List(_) => "the element has no GraphQL type"
     _ => "no GraphQL type"
   }

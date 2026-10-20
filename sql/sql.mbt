@@ -182,7 +182,9 @@ fn unstorable(kind : @moonmodel.Type) -> String {
     Dict(_) => "a mapping with open keys needs its own table"
     Ref(name) =>
       "a reference to \{name} is a foreign key, which needs that table's key"
+    Nest(_) => "a nested model needs its own table"
     Any => "anything at all has no column type"
+    Raw(_) => "a schema written out by hand has no column type"
     _ => "no column type"
   }
 }
@@ -215,11 +217,21 @@ fn clause(name : String, check : @moonmodel.Check) -> String {
   bound(parts, name, ">", check.over)
   bound(parts, name, "<", check.under)
   if check.options.length() > 0 {
-    let quoted = []
+    let written = []
     for one in check.options {
-      quoted.push("'" + one.replace(old="'", new="''") + "'")
+      // A value SQL has no literal for takes the whole clause with it: a
+      // partial IN list would silently refuse what it should allow.
+      match literal(Some(one)) {
+        Some(text) => written.push(text)
+        None => {
+          written.clear()
+          break
+        }
+      }
     }
-    parts.push(name + " IN (" + join(quoted, ", ") + ")")
+    if written.length() > 0 {
+      parts.push(name + " IN (" + join(written, ", ") + ")")
+    }
   }
   match check.longest {
     Some(longest) => parts.push("length(\{name}) <= \{longest}")

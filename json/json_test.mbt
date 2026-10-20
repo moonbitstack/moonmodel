@@ -286,3 +286,87 @@ fn plain_of(model : @moonmodel.Model, name : String) -> Json {
     _ => Json::null()
   }
 }
+
+///|
+/// A model with no name of its own is written where it stands. There is
+/// nothing to hoist it under and nothing that could point at it.
+test "a nested model is written in place" {
+  let model = @moonmodel.Model::new("Order", [
+    @moonmodel.Field::new(
+      "ship_to",
+      Nest(
+        @moonmodel.Model::new("", [
+          @moonmodel.Field::new("city", Text),
+          @moonmodel.Field::new("zip", Text, required=false),
+        ]),
+      ),
+    ),
+  ])
+  assert_eq(@json.of(model), {
+    "type": "object",
+    "title": "Order",
+    "properties": {
+      "ship_to": {
+        "type": "object",
+        "properties": {
+          "city": { "type": "string" },
+          "zip": { "type": "string" },
+        },
+        "required": ["city"],
+      },
+    },
+    "required": ["ship_to"],
+  })
+}
+
+///|
+/// What the vocabulary cannot say goes through as it stands. Nothing reads
+/// inside it, which is the point and also the reason to reach for it last.
+test "a hand-written schema passes through" {
+  let written : Json = {
+    "allOf": [{ "$ref": "#/$defs/A" }, { "$ref": "#/$defs/B" }],
+  }
+  let model = @moonmodel.Model::new("T", [
+    @moonmodel.Field::new("both", Raw(written)),
+  ])
+  assert_eq(@json.of(model), {
+    "type": "object",
+    "title": "T",
+    "properties": { "both": written },
+    "required": ["both"],
+  })
+}
+
+///|
+/// A closed set of numbers is as ordinary as one of names, so the values are
+/// Json and reach the schema unchanged.
+test "a closed set may hold any json" {
+  let model = @moonmodel.Model::new("T", [
+    @moonmodel.Field::new(
+      "n",
+      Int,
+      check=@moonmodel.Check::new(options=[Json::number(1), Json::number(2)]),
+    ),
+  ])
+  guard @json.of(model) is Object(fields) else { fail("not an object") }
+  guard fields.get("properties") is Some(Object(properties)) else {
+    fail("no properties")
+  }
+  guard properties.get("n") is Some(Object(one)) else { fail("no n") }
+  assert_eq(
+    one.get("enum"),
+    Some(Json::array([Json::number(1), Json::number(2)])),
+  )
+}
+
+///|
+/// A nested model has no name, but what it refers to still has to be carried.
+test "a document reaches references inside a nested model" {
+  let inner = @moonmodel.Model::new("", [
+    @moonmodel.Field::new("home", Ref("Address")),
+  ])
+  let model = @moonmodel.Model::new("T", [
+    @moonmodel.Field::new("at", Nest(inner)),
+  ])
+  assert_eq(model.mentions(), ["Address"])
+}

@@ -182,9 +182,13 @@ fn shape(kind : @moonmodel.Type, at : String) -> Json {
         ]),
       )
     Ref(name) => Json::object(Map([("$ref", Json::string(at + name))]))
+    // A model with no name of its own is written where it stands; there is
+    // nothing to hoist it under and nothing to point at it.
+    Nest(model) => of(model, at~)
     // The empty schema, which accepts anything. Not `"type": "any"`, which no
     // draft has ever had.
     Any => Json::object(Map([]))
+    Raw(written) => written
   }
 }
 
@@ -219,7 +223,7 @@ fn bounds(check : @moonmodel.Check, out : Map[String, Json]) -> Unit {
     None => ()
   }
   if check.options.length() > 0 {
-    out["enum"] = Json::array(check.options.map(Json::string))
+    out["enum"] = Json::array(check.options)
   }
   if check.distinct {
     out["uniqueItems"] = Json::boolean(true)

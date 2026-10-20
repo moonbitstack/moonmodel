@@ -172,3 +172,42 @@ test "UNIQUE comes from unique, not from distinct" {
   ])
   assert_true(@sql.table(model, dialect=Postgres).contains("NOT NULL UNIQUE"))
 }
+
+///|
+/// A nested model and a hand-written schema have no column, and say which.
+test "the two new shapes have no column either" {
+  let model = @moonmodel.Model::new("T", [
+    @moonmodel.Field::new(
+      "at",
+      Nest(@moonmodel.Model::new("", [@moonmodel.Field::new("city", Text)])),
+    ),
+    @moonmodel.Field::new("both", Raw(Json::object(Map([])))),
+  ])
+  let (columns, skipped) = @sql.of(model)
+  assert_eq(columns.length(), 0)
+  assert_eq(skipped[0].why, "a nested model needs its own table")
+  assert_true(skipped[1].why.contains("written out by hand"))
+}
+
+///|
+/// A closed set of numbers needs no quoting, and one holding a value SQL has
+/// no literal for drops the clause rather than writing half of it — a partial
+/// IN list would refuse values it should allow.
+test "a closed set is written per value, or not at all" {
+  let numbers = @moonmodel.Model::new("t", [
+    @moonmodel.Field::new(
+      "n",
+      Int,
+      check=@moonmodel.Check::new(options=[Json::number(1), Json::number(2)]),
+    ),
+  ])
+  assert_true(@sql.table(numbers, dialect=Postgres).contains("n IN (1, 2)"))
+  let mixed = @moonmodel.Model::new("t", [
+    @moonmodel.Field::new(
+      "n",
+      Int,
+      check=@moonmodel.Check::new(options=[Json::number(1), Json::array([])]),
+    ),
+  ])
+  assert_false(@sql.table(mixed, dialect=Postgres).contains("IN ("))
+}

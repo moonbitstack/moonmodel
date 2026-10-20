@@ -210,3 +210,28 @@ test "documentation becomes a description block" {
     ),
   )
 }
+
+///|
+/// Every GraphQL type is declared and named, so a model with no name cannot
+/// be written at all — and a hand-written schema even less so.
+test "the two new shapes have no GraphQL type" {
+  let model = @moonmodel.Model::new("T", [
+    @moonmodel.Field::new("ok", Text),
+    @moonmodel.Field::new(
+      "at",
+      Nest(@moonmodel.Model::new("", [@moonmodel.Field::new("city", Text)])),
+    ),
+    @moonmodel.Field::new("both", Raw(Json::object(Map([])))),
+  ])
+  let (text, skipped) = @sdl.of(model)
+  assert_eq(
+    text,
+    (
+      #|type T {
+      #|  ok: String!
+      #|}
+    ),
+  )
+  assert_true(skipped[0].why.contains("give this model a name"))
+  assert_true(skipped[1].why.contains("written out by hand"))
+}

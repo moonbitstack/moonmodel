@@ -28,8 +28,17 @@ pub(all) enum Type {
   Dict(Type)
   /// Another model, by name.
   Ref(String)
+  /// Another model, written here. For the one that has no name of its own and
+  /// so cannot be referred to; a named one belongs in `Ref` so that the
+  /// projections can hoist it and point at it once.
+  Nest(Model)
   /// Anything at all: JSON Schema's empty schema.
   Any
+  /// A schema written out in full, for what this vocabulary cannot say —
+  /// `allOf`, a vocabulary of one's own, a dialect's extension. Each
+  /// projection either passes it through as it stands or reports that it
+  /// cannot carry it. Reach for it last: nothing reads inside it.
+  Raw(Json)
 } derive(Eq, Debug)
 
 ///|
@@ -59,8 +68,9 @@ pub(all) struct Check {
   /// A named shape a string is checked against — `date-time`, `email`, `uuid`.
   /// Checked, never converted: see the README on when a string becomes a date.
   format : String?
-  /// The values allowed, if the set is closed.
-  options : Array[String]
+  /// The values allowed, if the set is closed. Json rather than text because
+  /// a closed set of numbers is just as ordinary as one of names.
+  options : Array[Json]
   /// Whether a list's items must differ (`uniqueItems`).
   distinct : Bool
   /// Whether no two records may carry the same value.
@@ -106,7 +116,7 @@ pub fn Check::new(
   longest? : Int32,
   pattern? : String,
   format? : String,
-  options~ : Array[String] = [],
+  options~ : Array[Json] = [],
   distinct~ : Bool = false,
   unique~ : Bool = false,
 ) -> Check {
@@ -240,6 +250,11 @@ fn names(kind : Type, out : Array[String]) -> Unit {
   match kind {
     Ref(name) => if !out.contains(name) { out.push(name) }
     List(inner) | Dict(inner) => names(inner, out)
+    // A nested model has no name of its own, but what it refers to counts.
+    Nest(model) =>
+      for one in model.fields {
+        names(one.kind, out)
+      }
     _ => ()
   }
 }

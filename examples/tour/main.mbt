@@ -50,7 +50,11 @@ fn customer() -> @moonmodel.Model {
         "tier",
         Text,
         default=Json::string("free"),
-        check=@moonmodel.Check::new(options=["free", "paid", "staff"]),
+        check=@moonmodel.Check::new(options=[
+          Json::string("free"),
+          Json::string("paid"),
+          Json::string("staff"),
+        ]),
       ),
       @moonmodel.Field::new(
         "tags",
@@ -59,7 +63,20 @@ fn customer() -> @moonmodel.Model {
       ),
       @moonmodel.Field::new("labels", Dict(Text)),
       @moonmodel.Field::new("home", Ref("Address")),
+      @moonmodel.Field::new(
+        "billed_to",
+        Nest(
+          @moonmodel.Model::new("", [
+            @moonmodel.Field::new("name", Text),
+            @moonmodel.Field::new("vat", Text, required=false),
+          ]),
+        ),
+      ),
       @moonmodel.Field::new("notes", Any, required=false),
+      @moonmodel.Field::new(
+        "either",
+        Raw({ "oneOf": [{ "type": "string" }, { "type": "integer" }] }),
+      ),
     ],
     doc="somebody with an account",
   )

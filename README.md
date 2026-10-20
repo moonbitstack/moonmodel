@@ -69,7 +69,9 @@ default and a `Check`.
 | `Bool` `Int` `Big` `Real` `Text` `Bytes` `Stamp` | the scalars; `Big` is 64-bit, `Stamp` an instant |
 | `List(Type)` `Dict(Type)` | a sequence, and a mapping with open keys |
 | `Ref(String)` | another model, by name, so descriptions refer to each other without nesting |
+| `Nest(Model)` | a model written where it stands, for the one with no name of its own |
 | `Any` | anything at all |
+| `Raw(Json)` | a schema written out in full, for what this vocabulary cannot say |
 
 **`required` and `nullable` are two questions.** The first asks whether the
 key has to be there, the second whether its value may be null. JSON Schema
@@ -86,7 +88,7 @@ guessing.
 | `step` | `multipleOf` |
 | `shortest` `longest` | a string's characters or a list's items |
 | `pattern` `format` | a regular expression, and a named shape such as `email` |
-| `options` | the values allowed, if the set is closed |
+| `options` | the values allowed, if the set is closed — any Json, not only text |
 | `distinct` | one list's items must differ |
 | `unique` | no two records carry the same value — only SQL can state this |
 
@@ -99,13 +101,17 @@ Every projection reports what it dropped rather than inventing a shape for it
 or failing. `sql.of` and `sdl.of` return the fields they skipped along with
 the reason; the JSON Schema and OpenAPI writers drop nothing but `unique`.
 
+`Raw` is the escape hatch, and it is the last thing to reach for: nothing
+reads inside it, so a projection can only pass it through or report that it
+cannot.
+
 |  | Cannot carry |
 |:--:|:--|
 | JSON Schema | `unique`, which is about the collection and not the value |
 | OpenAPI 2.0 | nullable has no keyword — written as `x-nullable`, which is what its tooling reads |
 | OpenAPI 2.0 / 3.0 | an open bound is a boolean beside the closed one, not a number |
-| SQL | `Dict` and `Ref` need their own table; `List` is a column only in Postgres; `Any` has no type; `pattern` is spelled three different ways |
-| GraphQL | `Dict` and `Any` have no type; no bound of any kind reaches the schema |
+| SQL | `Dict`, `Nest` and `Ref` need their own table; `List` is a column only in Postgres; `Any` and `Raw` have no type; `pattern` is spelled three different ways |
+| GraphQL | `Dict`, `Nest`, `Any` and `Raw` have no type; no bound of any kind reaches the schema |
 
 GraphQL has no date and no byte string, so both are custom scalars —
 `DateTime` and `Base64` by default, and `document` declares them once. A
