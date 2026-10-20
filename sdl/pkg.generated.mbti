@@ -1,0 +1,31 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonmodel/sdl"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitstack/moonmodel",
+}
+
+// Values
+pub let bytes : String
+
+pub fn document(ArrayView[@moonmodel.Model], stamp? : String, bytes? : String) -> String
+
+pub fn of(@moonmodel.Model, input? : Bool, stamp? : String, bytes? : String) -> (String, Array[Skipped])
+
+pub let stamp : String
+
+// Errors
+
+// Types and methods
+pub(all) struct Skipped {
+  field : String
+  why : String
+} derive(Eq, @debug.Debug)
+pub fn Skipped::equal(Self, Self) -> Bool
+pub fn Skipped::not_equal(Self, Self) -> Bool
+pub fn Skipped::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,15 @@
+// The GraphQL schema language:
+// https://spec.graphql.org/October2021/#sec-Type-System
+//
+// GraphQL says two things JSON Schema cannot — a field is non-null with `!`,
+// and a named type is a reference by construction — and cannot say two things
+// JSON Schema can: a mapping with open keys, and bounds. The bounds become
+// nothing, which is correct: GraphQL validates shape, not range.
+import {
+  "moonbitstack/moonmodel",
+}
+
+import {
+  "moonbitstack/moonmodel/sdl",
+  "moonbitstack/moonmodel",
+} for "test"

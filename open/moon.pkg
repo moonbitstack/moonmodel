@@ -1,0 +1,17 @@
+// The Schema Object of OpenAPI, in all three dialects:
+// Swagger 2.0 https://swagger.io/specification/v2/
+// OpenAPI 3.0.3 https://spec.openapis.org/oas/v3.0.3
+// OpenAPI 3.1.0 https://spec.openapis.org/oas/v3.1.0
+//
+// 3.1 is JSON Schema 2020-12, so it is `json`'s output with the reference
+// prefix changed. The two older dialects differ in three places, and each
+// difference is one of them failing to say something 2020-12 can.
+import {
+  "moonbitstack/moonmodel",
+  "moonbitstack/moonmodel/json",
+}
+
+import {
+  "moonbitstack/moonmodel/open",
+  "moonbitstack/moonmodel",
+} for "test"

@@ -1,0 +1,30 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonmodel/open"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitstack/moonmodel",
+}
+
+// Values
+pub fn of(@moonmodel.Model, dialect? : Dialect) -> Json
+
+pub fn schemas(ArrayView[@moonmodel.Model], dialect? : Dialect) -> Json
+
+// Errors
+
+// Types and methods
+pub(all) enum Dialect {
+  Swagger20
+  OpenApi30
+  OpenApi31
+} derive(Eq, @debug.Debug)
+pub fn Dialect::at(Self) -> String
+pub fn Dialect::equal(Self, Self) -> Bool
+pub fn Dialect::holder(Self) -> String
+pub fn Dialect::not_equal(Self, Self) -> Bool
+pub fn Dialect::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

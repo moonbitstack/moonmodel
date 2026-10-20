@@ -1,0 +1,48 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonmodel/sql"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitstack/moonmodel",
+}
+
+// Values
+pub fn of(@moonmodel.Model, dialect? : Dialect) -> (Array[Column], Array[Skipped])
+
+pub fn table(@moonmodel.Model, dialect? : Dialect, name? : String) -> String
+
+// Errors
+
+// Types and methods
+pub(all) struct Column {
+  name : String
+  kind : String
+  null : Bool
+  default : String?
+  unique : Bool
+  check : String
+} derive(Eq, @debug.Debug)
+pub fn Column::equal(Self, Self) -> Bool
+pub fn Column::not_equal(Self, Self) -> Bool
+pub fn Column::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Dialect {
+  Sqlite
+  Postgres
+  Mysql
+} derive(Eq, @debug.Debug)
+pub fn Dialect::equal(Self, Self) -> Bool
+pub fn Dialect::not_equal(Self, Self) -> Bool
+pub fn Dialect::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Skipped {
+  field : String
+  why : String
+} derive(Eq, @debug.Debug)
+pub fn Skipped::equal(Self, Self) -> Bool
+pub fn Skipped::not_equal(Self, Self) -> Bool
+pub fn Skipped::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

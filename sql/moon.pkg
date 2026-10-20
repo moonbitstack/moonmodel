@@ -1,0 +1,14 @@
+// Columns and the DDL that declares them.
+//
+// SQL is the projection that loses most, and each loss is stated rather than
+// guessed at: a nested object has no column, a mapping has no column, and the
+// three families spell the same type differently. What a dialect cannot hold
+// is reported, not dropped.
+import {
+  "moonbitstack/moonmodel",
+}
+
+import {
+  "moonbitstack/moonmodel/sql",
+  "moonbitstack/moonmodel",
+} for "test"
