@@ -63,10 +63,19 @@ pub(all) struct Check {
   options : Array[String]
   /// Whether a list's items must differ (`uniqueItems`).
   distinct : Bool
-} derive(Eq)
+  /// Whether no two records may carry the same value.
+  ///
+  /// Separate from `distinct`, which is about one list's own items: this one
+  /// is about the collection the records live in, and only SQL can state it.
+  /// The other three projections drop it.
+  unique : Bool
+} derive(Eq, Debug)
 
 ///|
 pub extend Check with Eq::{equal, not_equal}
+
+///|
+pub extend Check with Debug::{to_repr}
 
 ///|
 /// No bound at all, which is what most fields carry.
@@ -82,6 +91,7 @@ pub let check : Check = {
   format: None,
   options: [],
   distinct: false,
+  unique: false,
 }
 
 ///|
@@ -98,6 +108,7 @@ pub fn Check::new(
   format? : String,
   options~ : Array[String] = [],
   distinct~ : Bool = false,
+  unique~ : Bool = false,
 ) -> Check {
   {
     least,
@@ -111,6 +122,7 @@ pub fn Check::new(
     format,
     options,
     distinct,
+    unique,
   }
 }
 
@@ -138,10 +150,13 @@ pub(all) struct Field {
   doc : String
   default : Json?
   check : Check
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub extend Field with Eq::{equal, not_equal}
+
+///|
+pub extend Field with Debug::{to_repr}
 
 ///|
 /// A field. Required by default, because a type whose fields are all optional
@@ -165,10 +180,13 @@ pub(all) struct Model {
   name : String
   doc : String
   fields : Array[Field]
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub extend Model with Eq::{equal, not_equal}
+
+///|
+pub extend Model with Debug::{to_repr}
 
 ///|
 pub fn Model::new(

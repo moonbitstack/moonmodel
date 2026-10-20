@@ -44,7 +44,7 @@ pub(all) struct Column {
   null : Bool
   /// A default, already written as SQL text, or absent.
   default : String?
-  /// Whether the values must differ, from `Check::distinct`.
+  /// Whether no two rows may carry the same value, from `Check::unique`.
   unique : Bool
   /// The CHECK clause the bounds amount to, or empty when they amount to
   /// nothing.
@@ -76,7 +76,7 @@ pub fn of(
           kind,
           null: !field.required || field.nullable,
           default: literal(field.default),
-          unique: field.check.distinct,
+          unique: field.check.unique,
           check: clause(field.name, field.check),
         })
       None => skipped.push({ field: field.name, why: unstorable(field.kind), })

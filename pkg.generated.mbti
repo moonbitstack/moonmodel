@@ -23,11 +23,13 @@ pub(all) struct Check {
   format : String?
   options : Array[String]
   distinct : Bool
-} derive(Eq)
+  unique : Bool
+} derive(Eq, @debug.Debug)
 pub fn Check::equal(Self, Self) -> Bool
 pub fn Check::is_empty(Self) -> Bool
-pub fn Check::new(least? : Double, most? : Double, over? : Double, under? : Double, step? : Double, shortest? : Int32, longest? : Int32, pattern? : String, format? : String, options? : Array[String], distinct? : Bool) -> Self
+pub fn Check::new(least? : Double, most? : Double, over? : Double, under? : Double, step? : Double, shortest? : Int32, longest? : Int32, pattern? : String, format? : String, options? : Array[String], distinct? : Bool, unique? : Bool) -> Self
 pub fn Check::not_equal(Self, Self) -> Bool
+pub fn Check::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Field {
   name : String
@@ -37,22 +39,24 @@ pub(all) struct Field {
   doc : String
   default : Json?
   check : Check
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 pub fn Field::equal(Self, Self) -> Bool
 pub fn Field::new(String, Type, required? : Bool, nullable? : Bool, doc? : String, default? : Json, check? : Check) -> Self
 pub fn Field::not_equal(Self, Self) -> Bool
+pub fn Field::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Model {
   name : String
   doc : String
   fields : Array[Field]
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 pub fn Model::equal(Self, Self) -> Bool
 pub fn Model::field(Self, String) -> Field?
 pub fn Model::mentions(Self) -> Array[String]
 pub fn Model::new(String, Array[Field], doc? : String) -> Self
 pub fn Model::not_equal(Self, Self) -> Bool
 pub fn Model::required(Self) -> Array[String]
+pub fn Model::to_repr(Self) -> @debug.Repr
 
 pub(all) enum Type {
   Bool

@@ -139,3 +139,36 @@ test "a text default is quoted safely" {
   )
   assert_eq(other.unwrap().default, None)
 }
+
+///|
+/// A list's items differing and a column's rows differing are two different
+/// constraints, and only the second is `UNIQUE`. SQL carries the second;
+/// `distinct` belongs to the list and reaches JSON Schema instead.
+test "UNIQUE comes from unique, not from distinct" {
+  let rows = column(
+    @moonmodel.Field::new(
+      "email",
+      Text,
+      check=@moonmodel.Check::new(unique=true),
+    ),
+    Postgres,
+  )
+  assert_eq(rows.unwrap().unique, true)
+  let items = column(
+    @moonmodel.Field::new(
+      "tags",
+      List(Text),
+      check=@moonmodel.Check::new(distinct=true),
+    ),
+    Postgres,
+  )
+  assert_eq(items.unwrap().unique, false)
+  let model = @moonmodel.Model::new("t", [
+    @moonmodel.Field::new(
+      "email",
+      Text,
+      check=@moonmodel.Check::new(unique=true),
+    ),
+  ])
+  assert_true(@sql.table(model, dialect=Postgres).contains("NOT NULL UNIQUE"))
+}

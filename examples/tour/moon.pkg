@@ -1,0 +1,10 @@
+// One description, four projections: `moon run examples/tour`.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonmodel",
+  "moonbitstack/moonmodel/json",
+  "moonbitstack/moonmodel/open",
+  "moonbitstack/moonmodel/sdl",
+  "moonbitstack/moonmodel/sql",
+}
