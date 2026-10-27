@@ -1,4 +1,4 @@
-// One description, four projections: `moon run examples/tour`.
+// One description, four projections: `moon run src/examples/tour`.
 pkgtype(kind: "executable")
 
 import {

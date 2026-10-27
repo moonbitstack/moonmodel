@@ -29,7 +29,7 @@ println(@sql.table(user, dialect=Postgres))
 println(@sdl.document([user][:]))
 ```
 
-`moon run examples/tour` runs all four on one description that uses every
+`moon run src/examples/tour` runs all four on one description that uses every
 part of the vocabulary.
 
 ## Install
