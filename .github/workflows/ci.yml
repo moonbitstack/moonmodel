@@ -54,6 +54,10 @@ jobs:
             fi
           done
 
+      - name: generated annotations are fresh
+        if: runner.os == 'Linux'
+        run: moon run src/cmd/derive --target native -- -C . src/examples/annotations/models.mbt -o src/examples/annotations/models.g.mbt --check
+
       - name: lint (fmt is clean)
         run: |
           moon fmt && git diff --exit-code

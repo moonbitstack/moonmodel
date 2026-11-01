@@ -1,0 +1,14 @@
+// Models written as `#model` annotations, checked against the same models written
+// by hand. `models.g.mbt` comes from `cmd/derive`; a project wires it as a
+// dev_build rule.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonmodel",
+  "moonbitstack/moonmodel/json",
+  "moonbitstack/moonmodel/open",
+  "moonbitstack/moonmodel/sdl",
+  "moonbitstack/moonmodel/sql",
+}
+
+formatter(ignore: [ "models.g.mbt" ])

@@ -1,6 +1,6 @@
 name = "moonbitstack/moonmodel"
 
-version = "0.1.0"
+version = "0.1.1"
 
 readme = "README.md"
 
@@ -11,5 +11,11 @@ license = "Apache-2.0"
 keywords = [ "schema", "model", "mapping", "serde", "pydantic", "moonbit" ]
 
 description = "One model description for MoonBit, projected to JSON Schema, OpenAPI, SQL and GraphQL."
+
+import {
+  "moonbitstack/moonast@0.2.3",
+  "moonbitlang/parser@0.4.6",
+  "moonbitlang/async@0.22.5",
+}
 
 source = "src"

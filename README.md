@@ -8,7 +8,83 @@ MoonBit already turns a struct into JSON and back — `derive(ToJson)`,
 
 The same concept is currently written four times over: moonapi's schema
 fields, moonorm's model columns, moongql's SDL fields, moonschema's documents.
-Write it once instead:
+Annotate the struct once instead:
+
+```moonbit
+#model.derive(doc="somebody with an account")
+pub struct User {
+  #model.field(unique=true)
+  id : Int64
+  #model.field(longest="64")
+  name : String
+  age : Int32?
+  home : Address
+}
+
+#model.derive
+pub struct Address {
+  city : String
+}
+```
+
+`User::describe()` is then the description, and every projection takes it:
+
+```moonbit
+// JSON Schema 2020-12, an OpenAPI Schema Object, CREATE TABLE, type User { … }
+println(@json.of(User::describe()).stringify(indent=2))
+println(@open.of(User::describe(), dialect=OpenApi30).stringify(indent=2))
+println(@sql.table(User::describe(), dialect=Postgres))
+println(@sdl.document([User::describe(), Address::describe()][:]))
+```
+
+## Annotations
+
+`cmd/derive` reads the annotations at build time. In `moon.mod`:
+
+<!-- nocheck -->
+```
+rule(name: "model", command: "moonx moonbitstack/moonmodel/cmd/derive@0.1.1 -C \"$mod_dir\" \"$input\" -o \"$output\"")
+```
+
+and in the `moon.pkg` of the package holding the structs:
+
+<!-- nocheck -->
+```
+dev_build(rule: "model", input: "models.mbt", output: "models.g.mbt")
+formatter(ignore: [ "models.g.mbt" ])
+import { "moonbitstack/moonmodel" }
+```
+
+| Annotation | Goes on | Means |
+|:--:|:--:|:--|
+| `#model.derive` | a struct | generate `T::describe()`; `name=` and `doc=` set the model's name and text |
+| `#model.derive` | an enum | a field of this type is text limited to its constructors |
+| `#model.field` | a field | everything below |
+| `#model.skip` | a field | leave it out |
+
+| `#model.field` key | Means |
+|:--:|:--|
+| `name`, `doc` | the field's name in the model, and its text |
+| `kind` | the type, when the field's own says nothing: `bool`, `int`, `big`, `real`, `text`, `bytes`, `stamp`, `any` |
+| `model` | the type is the model of this name |
+| `required`, `nullable` | override what the type says |
+| `default` | a default, read by the field's type, so `"0"` on a `String` is text |
+| `least`, `most`, `over`, `under`, `step` | numeric bounds, as strings, since an annotation has no numbers |
+| `shortest`, `longest` | the length of text or a list |
+| `pattern`, `format` | a text field's shape |
+| `option` | one allowed value, repeated |
+| `distinct`, `unique` | a list's items differ; no two records share the value |
+
+A field with no annotation is named after itself and required. `T?` may be left
+out and may be null. A field with a default may be left out. `Array[T]` is a
+list, `Map[String, T]` a dictionary, an annotated struct a `Ref`, and `@pkg.T` a
+`Ref` to the model named `T`. A type that says nothing is refused at build time,
+with the file and line.
+
+## By hand
+
+The annotations generate calls to this, and a model built at run time is written
+the same way:
 
 ```moonbit
 let user = @moonmodel.Model::new(
@@ -16,18 +92,15 @@ let user = @moonmodel.Model::new(
   [
     @moonmodel.Field::new("id", Big, check=@moonmodel.Check::new(unique=true)),
     @moonmodel.Field::new("name", Text, check=@moonmodel.Check::new(longest=64)),
-    @moonmodel.Field::new("age", Int, required=false),
+    @moonmodel.Field::new("age", Int, required=false, nullable=true),
     @moonmodel.Field::new("home", Ref("Address")),
   ],
   doc="somebody with an account",
 )
-
-// JSON Schema 2020-12, an OpenAPI Schema Object, CREATE TABLE, type User { … }
-println(@json.of(user).stringify(indent=2))
-println(@open.of(user, dialect=OpenApi30).stringify(indent=2))
-println(@sql.table(user, dialect=Postgres))
-println(@sdl.document([user][:]))
 ```
+
+`moon run src/examples/annotations` holds an annotated model to the same model
+written by hand.
 
 `moon run src/examples/tour` runs all four on one description that uses every
 part of the vocabulary.

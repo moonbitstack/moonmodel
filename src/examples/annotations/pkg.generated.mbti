@@ -1,0 +1,41 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonmodel/examples/annotations"
+
+import {
+  "moonbitstack/moonmodel",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct Home {
+  city : String
+  zip : String
+}
+pub fn Home::describe() -> @moonmodel.Model
+
+pub enum Role {
+  Admin
+  Member
+  Guest
+}
+
+pub struct User {
+  id : Int64
+  name : String
+  email : String?
+  age : Int32?
+  role : Role
+  weight : Double
+  home : Home
+  tags : Array[String]
+  joined : String
+  visits : Int32
+}
+pub fn User::describe() -> @moonmodel.Model
+
+// Type aliases
+
+// Traits
