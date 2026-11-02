@@ -6,7 +6,7 @@
 fn inner_option(ty : String) -> String? {
   let ty = ty.trim(chars=" ")
   if ty.has_suffix("?") {
-    Some(ty.view(end_offset=ty.length() - 1).trim(chars=" ").to_owned())
+    Some(ty.exact_view(end=ty.length() - 1).trim(chars=" ").to_owned())
   } else {
     inside(ty.to_owned(), "Option[")
   }
@@ -18,7 +18,7 @@ fn inside(ty : String, head : String) -> String? {
   if ty.has_prefix(head) && ty.has_suffix("]") {
     Some(
       ty
-      .view(start_offset=head.length(), end_offset=ty.length() - 1)
+      .exact_view(start=head.length(), end=ty.length() - 1)
       .trim(chars=" ")
       .to_owned(),
     )
@@ -31,10 +31,10 @@ fn inside(ty : String, head : String) -> String? {
 /// The value type of a `Map[String, T]`. A key other than `String` has no description.
 fn map_value(args : String) -> String? {
   guard args.find(",") is Some(comma) else { return None }
-  guard args.view(end_offset=comma).trim(chars=" ") == "String" else {
+  guard args.exact_view(end=comma).trim(chars=" ") == "String" else {
     return None
   }
-  Some(args.view(start_offset=comma + 1).trim(chars=" ").to_owned())
+  Some(args.exact_view(start=comma + 1).trim(chars=" ").to_owned())
 }
 
 ///|
@@ -70,7 +70,7 @@ fn kind_of(ty : String, known : Known) -> String? {
   if ty.has_prefix("@") {
     match ty.rev_find(".") {
       Some(at) => {
-        let name = ty.view(start_offset=at + 1).to_owned()
+        let name = ty.exact_view(start=at + 1).to_owned()
         return Some("Ref(\{quoted(name)})")
       }
       None => ()
