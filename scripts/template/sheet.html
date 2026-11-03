@@ -875,9 +875,9 @@ const STEPS = [
   { t:'Quick start & the surface', d:'The packages, a copyable example, and the way on to the full API reference — every type and function, with the doc comment it was written with.',
     r:()=>({x:cardB, y:NOTES_TOP, w:(W-FRAME-24)-cardB, h:NOTES_H}) },
   { t:'The sea', d:'A chart by day. Press N, or click the edition mark, and the same sheet turns into its night edition.',
-    r:()=>({x:FRAME, y:seaY, w:W-2*FRAME, h:seaB-FRAME+4}) },
+    r:()=>({x:FRAME, y:seaY, w:W-2*FRAME, h:seaB-seaY}) },
 ];
-let curStep = 0, prevCam = null;
+let curStep = 0;
 const guideEl = document.getElementById('guide');
 const spotEl = document.getElementById('spot');
 const cardEl = document.getElementById('gcard');
@@ -899,6 +899,21 @@ function frameFor(rect){
   apply();
   clearTimeout(frameFor._t);
   frameFor._t = setTimeout(() => { svg.style.transition = 'none'; }, 660);
+}
+// The view the intro settles on — the matrix, not the whole sheet. The tour
+// returns here with the same easing, so BEGIN is a move and not a snap.
+function homeCam(){
+  const r = stage.getBoundingClientRect();
+  const hs = Math.min(1.02, Math.max(0.66, (r.width / W) * 1.9));
+  return { s: hs, tx: r.width * 0.22 - 520 * hs, ty: r.height * 0.42 - 640 * hs };
+}
+function glideTo(cam, ms){
+  clearTimeout(frameFor._t);
+  clearTimeout(glideTo._t);
+  svg.style.transition = 'transform ' + ms + 'ms cubic-bezier(.22,.61,.36,1)';
+  s = cam.s; tx = cam.tx; ty = cam.ty;
+  apply();
+  glideTo._t = setTimeout(() => { svg.style.transition = 'none'; }, ms + 40);
 }
 function showStep(i){
   curStep = i;
@@ -922,7 +937,6 @@ function openGuide(){
   ['g-title','g-stamp','g-stats','g-head','g-json','g-openapi','g-sql','g-sdl','g-notes','g-foot','g-sea']
     .forEach(id => { const g = document.getElementById(id); if (g) g.classList.add('shown'); });
   cancelIntro();
-  prevCam = { s, tx, ty };
   guideEl.classList.add('on'); guideEl.setAttribute('aria-hidden', 'false');
   document.body.classList.add('guiding');
   showStep(0);
@@ -930,13 +944,7 @@ function openGuide(){
 function closeGuide(){
   guideEl.classList.remove('on'); guideEl.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('guiding');
-  if (prevCam){
-    s = prevCam.s; tx = prevCam.tx; ty = prevCam.ty;
-    svg.style.transition = 'transform .55s cubic-bezier(.22,.61,.36,1)';
-    apply();
-    setTimeout(() => { svg.style.transition = 'none'; }, 580);
-    prevCam = null;
-  }
+  glideTo(homeCam(), 650);            // ease back to the opening focus, never snap
   try { localStorage.setItem('mm-tour', '1'); } catch (e) {}
 }
 document.getElementById('gnext').addEventListener('click', () => {
