@@ -68,6 +68,9 @@
   .rose-d{fill:var(--ink);opacity:.4;}
   .rose-c{fill:var(--brass);}
   .rose-l{font-family:'Cinzel',serif;font-size:14px;fill:var(--ink);opacity:.85;letter-spacing:.08em;}
+  .compass{cursor:pointer;}
+  .compass:focus{outline:none;}
+  .compass:hover .rose-rim,.compass:focus .rose-rim{stroke:var(--accent);stroke-width:1.6;}
   .wave{stroke:var(--route);stroke-width:.9;opacity:.6;fill:none;}
   .ship{fill:var(--ink);opacity:.6;}
   .sail{fill:var(--ink);opacity:.4;}
@@ -315,7 +318,8 @@ add(svg, 'rect', { x:FRAME, y:FRAME, width:W-FRAME*2, height:H-FRAME*2, class:'f
 add(svg, 'rect', { x:FRAME+10, y:FRAME+10, width:W-FRAME*2-20, height:H-FRAME*2-20, class:'frame-in' });
 
 (function compassRose(){
-  const g = add(svg, 'g');
+  const g = add(svg, 'g', { class:'compass', tabindex:'0', role:'button',
+                            'aria-label':'toggle the night edition' });
   const cx = W - FRAME - 122, cy = FRAME + 68, r = 42;
   add(g, 'circle', { cx, cy, r, class:'rose-rim' });
   add(g, 'circle', { cx, cy, r: r*0.66, class:'rose-rim2' });
@@ -331,6 +335,11 @@ add(svg, 'rect', { x:FRAME+10, y:FRAME+10, width:W-FRAME*2-20, height:H-FRAME*2-
   add(g, 'circle', { cx, cy, r: r*0.07, class:'rose-c' });
   const n = txt(g, cx, cy - r - 11, 'N', 'rose-l');
   n.setAttribute('text-anchor', 'middle');
+  // the compass turns the chart over: brass by day, brass on navy by night
+  g.addEventListener('click', e => { e.stopPropagation(); setNight(!NIGHT_ON()); });
+  g.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); setNight(!NIGHT_ON()); }
+  });
 })();
 
 // title ----------------------------------------------------------------------
@@ -757,9 +766,17 @@ document.querySelectorAll('[data-staff]').forEach(g => {
 function setNight(on){
   document.documentElement.classList.toggle('night', on);
   edition.textContent = on ? 'EDITION 2 — NIGHT' : 'EDITION 1 — CHART';
+  // one preference for the whole site: the document pages read this key
+  try { localStorage.setItem('mm-night', on ? '1' : '0'); } catch (e) {}
 }
 edition.addEventListener('click', e => { e.stopPropagation(); setNight(!NIGHT_ON()); });
-if (location.search.includes('night')) setNight(true);
+let storedNight = false;
+try { storedNight = localStorage.getItem('mm-night') === '1'; } catch (e) {}
+if (location.search.includes('night') || storedNight) setNight(true);
+// another tab (or another page) may change it while this one is open
+window.addEventListener('storage', e => {
+  if (e.key === 'mm-night') setNight(e.newValue === '1');
+});
 
 const stage = document.getElementById('stage');
 svg.addEventListener('click', () => { if (pinned >= 0){ pinned = -1; paint(); } });
