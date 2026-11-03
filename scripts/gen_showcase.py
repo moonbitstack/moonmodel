@@ -134,10 +134,10 @@ TEMPLATE = """<!DOCTYPE html>
   .sec h2{font-family:'Cinzel',serif;font-size:19px;letter-spacing:.05em;margin:0 0 .25em;}
   .intro{font-size:14px;line-height:1.6;opacity:.85;margin:0 0 12px;max-width:74ch;}
   .intro code{background:rgba(0,0,0,.06);padding:.05em .3em;border-radius:3px;font-size:.92em;}
-  .code{position:relative;background:var(--paper-hi);border:1px solid var(--ink);}
+  .code{position:relative;background:var(--paper-hi);border:1px solid var(--ink);padding-top:38px;}
   .code pre{margin:0;padding:16px 18px;overflow:auto;max-height:520px;
             font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.55;color:var(--ink);}
-  .copy{position:absolute;top:8px;right:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;
+  .copy{position:absolute;top:7px;right:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;
         letter-spacing:.12em;padding:5px 10px;border:1px solid var(--ink);background:var(--paper);
         color:var(--ink);cursor:pointer;opacity:.7;}
   .copy:hover{opacity:1;background:var(--accent);color:var(--paper);border-color:var(--accent);}
@@ -152,12 +152,15 @@ TEMPLATE = """<!DOCTYPE html>
 <div class="wrap"><div class="sheet">
   <header class="doc-head">
   <h1>MOONMODEL</h1>
+  <div class="pagerail" role="navigation" aria-label="pages">
+    <a href="index.html">sheet</a>
+    <a href="guide.html">guide</a>
+    <a href="showcase.html" aria-current="page">showcase</a>
+    <a href="api.html">api</a>
+  </div>
   <p class="sub">Showcase — one description, projected four ways, and checked</p>
   <div class="meta">
     <span>SHOWCASE 03 / 01 · THE OUTPUT</span>
-    <span><a href="index.html">← the front sheet</a></span>
-    <span><a href="guide.html">guide</a></span>
-    <span><a href="api.html">API reference</a></span>
     <span><a href="https://github.com/moonbitstack/moonmodel">github</a></span>
   </div>
   <nav>{{NAV}}</nav>
@@ -184,6 +187,7 @@ TEMPLATE = """<!DOCTYPE html>
     });
   });
 </script>
+<script src="assets/ui.js" defer></script>
 </body>
 </html>
 """

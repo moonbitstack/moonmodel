@@ -349,12 +349,15 @@ def build():
 <div class="wrap"><div class="sheet">
   <header class="doc-head">
   <h1>MOONMODEL</h1>
+  <div class="pagerail" role="navigation" aria-label="pages">
+    <a href="index.html">sheet</a>
+    <a href="guide.html">guide</a>
+    <a href="showcase.html">showcase</a>
+    <a href="api.html" aria-current="page">api</a>
+  </div>
   <p class="sub">API reference — one description, four projections</p>
   <div class="meta">
     <span>SHEET 02 / 01 · THE SURFACE</span>
-    <span><a href="index.html">← the front sheet</a></span>
-    <span><a href="guide.html">guide</a></span>
-    <span><a href="showcase.html">showcase</a></span>
     <span><a href="https://github.com/moonbitstack/moonmodel">github</a></span>
   </div>
   <div class="headrow">
@@ -397,6 +400,7 @@ def build():
     setNight(!document.documentElement.classList.contains('night')));
   if (location.search.includes('night')) setNight(true);
 </script>
+<script src="assets/ui.js" defer></script>
 </body>
 </html>
 """

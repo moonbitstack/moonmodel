@@ -126,8 +126,8 @@
   .guide.on{display:block;}
   .spot{position:absolute;border:2px solid var(--accent);border-radius:2px;
         box-shadow:0 0 0 9999px rgba(20,14,6,.44);pointer-events:none;
-        transition:left .34s cubic-bezier(.2,.7,.3,1),top .34s cubic-bezier(.2,.7,.3,1),
-                   width .34s cubic-bezier(.2,.7,.3,1),height .34s cubic-bezier(.2,.7,.3,1);}
+        transition:left .5s cubic-bezier(.2,.7,.3,1),top .5s cubic-bezier(.2,.7,.3,1),
+                   width .5s cubic-bezier(.2,.7,.3,1),height .5s cubic-bezier(.2,.7,.3,1);}
   .gcard{position:absolute;width:440px;max-width:86vw;background:var(--paper);
          border:1px solid var(--ink);padding:22px 24px 18px;
          box-shadow:0 0 0 1px var(--ink),0 18px 50px -24px rgba(0,0,0,.7);}
@@ -445,9 +445,13 @@ const links = [
   ['API REFERENCE', 'api.html'],
   ['GITHUB', repo],
 ];
-let linkX = cardC + 16;
+const LINK_GAP = 10;
+const pillWidth = label => label.length * 5.4 + 24;
+const linksW = links.reduce((n, [label]) => n + pillWidth(label), 0) + LINK_GAP * (links.length - 1);
+let linkX = cardC + (cardCw - linksW) / 2;          // centred, not left-hugging
+const linkY = NOTES_TOP + NOTES_H - 66;             // centred in the strip under the list
 links.forEach(([label, href]) => {
-  const w = label.length * 5.4 + 24;
+  const w = pillWidth(label);
   const a = document.createElementNS(SVGNS, 'a');
   a.setAttribute('href', href);
   if (/^https?:/.test(href)){
@@ -456,11 +460,11 @@ links.forEach(([label, href]) => {
   }
   const g = document.createElementNS(SVGNS, 'g');
   g.setAttribute('class', 'chip');
-  add(g, 'rect', { x: linkX, y: NOTES_TOP + NOTES_H - 42, width: w, height: 24, rx: 12, class: 'pill' });
-  txt(g, linkX + 12, NOTES_TOP + NOTES_H - 26, label, 'pill-text');
+  add(g, 'rect', { x: linkX, y: linkY, width: w, height: 24, rx: 12, class: 'pill' });
+  txt(g, linkX + 12, linkY + 16, label, 'pill-text');
   a.appendChild(g);
   gNotes.appendChild(a);
-  linkX += w + 10;
+  linkX += w + LINK_GAP;
 });
 
 // footer ---------------------------------------------------------------------
@@ -873,7 +877,7 @@ const STEPS = [
   { t:'The sea', d:'A chart by day. Press N, or click the edition mark, and the same sheet turns into its night edition.',
     r:()=>({x:FRAME, y:seaY, w:W-2*FRAME, h:seaB-FRAME+4}) },
 ];
-let curStep = 0;
+let curStep = 0, prevCam = null;
 const guideEl = document.getElementById('guide');
 const spotEl = document.getElementById('spot');
 const cardEl = document.getElementById('gcard');
@@ -881,9 +885,26 @@ const cardEl = document.getElementById('gcard');
 function toScreen(r){
   return { x: tx + r.x*s, y: ty + r.y*s, w: r.w*s, h: r.h*s };
 }
+// Move and scale the sheet so the whole step is on screen — the tour is a
+// reading path, so each stop has to bring its subject into view, not just
+// draw a box around wherever the camera happened to be.
+function frameFor(rect){
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const ns = Math.min(2.0, Math.max(0.3,
+    Math.min(vw * 0.86 / rect.w, vh * 0.50 / rect.h)));
+  tx = vw / 2 - (rect.x + rect.w / 2) * ns;
+  ty = vh * 0.38 - (rect.y + rect.h / 2) * ns;
+  s = ns;
+  svg.style.transition = 'transform .6s cubic-bezier(.22,.61,.36,1)';
+  apply();
+  clearTimeout(frameFor._t);
+  frameFor._t = setTimeout(() => { svg.style.transition = 'none'; }, 660);
+}
 function showStep(i){
   curStep = i;
-  const r = toScreen(STEPS[i].r());
+  const rect = STEPS[i].r();
+  frameFor(rect);
+  const r = toScreen(rect);
   spotEl.style.left = r.x + 'px'; spotEl.style.top = r.y + 'px';
   spotEl.style.width = Math.max(2, r.w) + 'px';
   spotEl.style.height = Math.max(2, r.h) + 'px';
@@ -891,18 +912,17 @@ function showStep(i){
   document.getElementById('gtitle').textContent = STEPS[i].t;
   document.getElementById('gtext').textContent = STEPS[i].d;
   document.getElementById('gnext').textContent = i === STEPS.length - 1 ? 'BEGIN' : 'NEXT';
-  const vw = window.innerWidth, vh = window.innerHeight;
+  const vw = window.innerWidth;
   const cw = Math.min(440, vw * 0.86);
   cardEl.style.width = cw + 'px';
-  cardEl.style.left = Math.max(20, Math.min(vw - cw - 20, r.x + r.w/2 - cw/2)) + 'px';
-  if (r.y + r.h/2 > vh * 0.56){ cardEl.style.top = '26px'; cardEl.style.bottom = 'auto'; }
-  else { cardEl.style.bottom = '26px'; cardEl.style.top = 'auto'; }
+  cardEl.style.left = Math.max(20, Math.min(vw - cw - 20, (vw - cw) / 2)) + 'px';
+  cardEl.style.bottom = '24px'; cardEl.style.top = 'auto';
 }
 function openGuide(){
   ['g-title','g-stamp','g-stats','g-head','g-json','g-openapi','g-sql','g-sdl','g-notes','g-foot','g-sea']
     .forEach(id => { const g = document.getElementById(id); if (g) g.classList.add('shown'); });
   cancelIntro();
-  if (!touched) fit();
+  prevCam = { s, tx, ty };
   guideEl.classList.add('on'); guideEl.setAttribute('aria-hidden', 'false');
   document.body.classList.add('guiding');
   showStep(0);
@@ -910,6 +930,13 @@ function openGuide(){
 function closeGuide(){
   guideEl.classList.remove('on'); guideEl.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('guiding');
+  if (prevCam){
+    s = prevCam.s; tx = prevCam.tx; ty = prevCam.ty;
+    svg.style.transition = 'transform .55s cubic-bezier(.22,.61,.36,1)';
+    apply();
+    setTimeout(() => { svg.style.transition = 'none'; }, 580);
+    prevCam = null;
+  }
   try { localStorage.setItem('mm-tour', '1'); } catch (e) {}
 }
 document.getElementById('gnext').addEventListener('click', () => {
