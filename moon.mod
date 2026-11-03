@@ -1,6 +1,6 @@
 name = "moonbitstack/moonmodel"
 
-version = "0.1.1"
+version = "0.1.2"
 
 readme = "README.md"
 
@@ -8,7 +8,26 @@ repository = "https://github.com/moonbitstack/moonmodel"
 
 license = "Apache-2.0"
 
-keywords = [ "schema", "model", "mapping", "serde", "pydantic", "moonbit" ]
+keywords = [
+  "model",
+  "schema",
+  "data-model",
+  "validation",
+  "serialization",
+  "serde",
+  "json",
+  "json-schema",
+  "openapi",
+  "sql",
+  "ddl",
+  "graphql",
+  "sdl",
+  "derive",
+  "annotations",
+  "pydantic",
+  "mapping",
+  "moonbit",
+]
 
 description = "One model description for MoonBit, projected to JSON Schema, OpenAPI, SQL and GraphQL."
 
