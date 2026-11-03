@@ -157,8 +157,10 @@ pub fn Type::word(self : Type) -> String? {
 /// The type a word stands for, when it is one of the words `word` writes.
 ///
 /// Read the suffixes from the right first: `uint16-be-ref` is a `uint16` in
-/// big-endian order, written by reference. A word is a type's whole spelling,
-/// so two words name two types and no two types share a word.
+/// big-endian order, written by reference. A word fixes what the kind and the
+/// width agree on, so a layout that contradicts its own kind — an `Int` at 64
+/// bits — is written at the width it states and read back as the kind that
+/// width belongs to.
 pub fn Type::of_word(word : String) -> Type? {
   let mut rest = word.trim(chars=" ").to_lower()
   let reference = rest.has_suffix("-ref")
