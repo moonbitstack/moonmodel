@@ -134,3 +134,29 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 /* a link that is a piece of the chart, not a browser hyperlink */
 a{color:inherit;text-decoration:none;}
 
+/* ============================================================================
+   THE DOCUMENT HEADER — one height on every page.
+   The guide, the reference and the showcase used to give the header three
+   different heights (the nav wrapped on one, the reference added a toolbar),
+   so moving between them made the page jump. The head is now a fixed block
+   and its rows never wrap; a long row scrolls sideways in silence instead.
+   ============================================================================ */
+.doc-head{min-height:188px;}
+.doc-head nav,.doc-head .meta{
+  flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;
+}
+.doc-head nav a,.doc-head .meta>*{flex:0 0 auto;white-space:nowrap;}
+.doc-head nav::-webkit-scrollbar,
+.doc-head .meta::-webkit-scrollbar{display:none;}
+
+/* a quiet arrival, so a move between pages reads as a transition, not a jump */
+@keyframes mm-page-in{
+  from{opacity:0;transform:translateY(5px);}
+  to{opacity:1;transform:none;}
+}
+.sheet,#stage{animation:mm-page-in .3s ease both;}
+@media (prefers-reduced-motion: reduce){
+  .sheet,#stage{animation:none;}
+}
+
+

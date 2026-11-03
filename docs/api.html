@@ -20,15 +20,18 @@
   .meta{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;opacity:.6;
          display:flex;gap:22px;margin-top:22px;flex-wrap:wrap;}
   .meta a{color:inherit;}
-  nav{margin:28px 0 12px;display:flex;gap:10px;flex-wrap:wrap;}
+  nav{margin:0;display:flex;gap:10px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}
+  nav::-webkit-scrollbar{display:none;}
   nav a{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;
          text-decoration:none;color:var(--ink);border:1px solid var(--ink);
          border-radius:14px;padding:5px 13px;opacity:.8;}
   nav a:hover{background:var(--accent);color:var(--paper);border-color:var(--accent);}
-  .bar{display:flex;gap:12px;margin:18px 0 6px;align-items:stretch;}
-  .bar #filter{flex:1;font-family:'IBM Plex Mono',monospace;font-size:12.5px;letter-spacing:.02em;}
+  .headrow{display:flex;align-items:center;gap:14px;margin-top:18px;}
+  .headrow nav{flex:1 1 auto;min-width:0;margin:0;}
+  .bar{display:flex;gap:10px;margin:0;align-items:stretch;flex:0 0 auto;}
+  .bar #filter{width:260px;flex:0 0 auto;font-family:'IBM Plex Mono',monospace;font-size:12.5px;letter-spacing:.02em;}
   .bar #night{flex:0 0 auto;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;}
-  .pkg{margin-top:54px;border-top:1px solid var(--ink);padding-top:26px;}
+  .pkg{margin-top:44px;border-top:1px solid var(--ink);padding-top:26px;}
   .pkg-head h2{font-family:'IBM Plex Mono',monospace;font-size:15px;letter-spacing:.04em;
                 margin:0;color:var(--accent);}
   .blurb{font-family:'EB Garamond',serif;font-style:italic;font-size:15px;opacity:.7;margin:.3em 0 0;}
@@ -62,6 +65,7 @@
 </head>
 <body>
 <div class="wrap"><div class="sheet">
+  <header class="doc-head">
   <h1>MOONMODEL</h1>
   <p class="sub">API reference — one description, four projections</p>
   <div class="meta">
@@ -71,12 +75,15 @@
     <span><a href="showcase.html">showcase</a></span>
     <span><a href="https://github.com/moonbitstack/moonmodel">github</a></span>
   </div>
-  <nav><a href="#pkg-moonmodel">moonmodel</a><a href="#pkg-moonmodel-json">moonmodel/json</a><a href="#pkg-moonmodel-open">moonmodel/open</a><a href="#pkg-moonmodel-sql">moonmodel/sql</a><a href="#pkg-moonmodel-sdl">moonmodel/sdl</a><a href="#pkg-moonmodel-verify">moonmodel/verify</a></nav>
-  <div class="bar">
-    <input id="filter" type="text" autocomplete="off"
-           placeholder="filter the surface — a type, a value, a method…">
-    <button id="night" type="button">EDITION 1 — CHART</button>
+  <div class="headrow">
+    <nav><a href="#pkg-moonmodel">root</a><a href="#pkg-moonmodel-json">json</a><a href="#pkg-moonmodel-open">open</a><a href="#pkg-moonmodel-sql">sql</a><a href="#pkg-moonmodel-sdl">sdl</a><a href="#pkg-moonmodel-verify">verify</a></nav>
+    <div class="bar">
+      <input id="filter" type="text" autocomplete="off"
+             placeholder="filter types, values, methods…">
+      <button id="night" type="button">EDITION 1 — CHART</button>
+    </div>
   </div>
+  </header>
   
         <section class="pkg" id="pkg-moonmodel">
           <header class="pkg-head">
@@ -153,11 +160,15 @@
   const filter = document.getElementById('filter');
   filter.addEventListener('input', () => {
     const q = filter.value.trim().toLowerCase();
-    document.querySelectorAll('.type,.value').forEach(n => {
-      n.style.display = (!q || n.textContent.toLowerCase().includes(q)) ? '' : 'none';
-    });
     document.querySelectorAll('.pkg').forEach(p => {
-      const any = [...p.querySelectorAll('.type,.value')].some(n => n.style.display !== 'none');
+      const head = (p.querySelector('.pkg-head h2') || {}).textContent || '';
+      const nameHit = !q || head.toLowerCase().includes(q);
+      let any = false;
+      p.querySelectorAll('.type,.value').forEach(n => {
+        const hit = nameHit || n.textContent.toLowerCase().includes(q);
+        n.style.display = hit ? '' : 'none';
+        if (hit) any = true;
+      });
       p.style.display = any ? '' : 'none';
     });
   });

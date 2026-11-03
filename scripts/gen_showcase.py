@@ -35,6 +35,19 @@ INTRO = {
 }
 
 
+# A short label for the nav; the section keeps its full heading.
+SHORT = {
+    "the description": "description",
+    "JSON Schema 2020-12": "JSON Schema",
+    "one document, references resolved": "resolved",
+    "the three OpenAPI dialects": "OpenAPI",
+    "SQL, three dialects": "SQL",
+    "GraphQL SDL": "GraphQL",
+    "a document declares its scalars": "scalars",
+    "checking an instance": "checking",
+}
+
+
 def slug(title: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
 
@@ -79,7 +92,7 @@ def build() -> str:
     for title, text in sections:
         sid = slug(title)
         intro = INTRO.get(title, "")
-        nav.append(f'<a href="#{sid}">{esc(title)}</a>')
+        nav.append(f'<a href="#{sid}">{esc(SHORT.get(title, title))}</a>')
         body.append(
             f'<section class="sec" id="{sid}">'
             f'<h2>{esc(title)}</h2>'
@@ -137,6 +150,7 @@ TEMPLATE = """<!DOCTYPE html>
 </head>
 <body>
 <div class="wrap"><div class="sheet">
+  <header class="doc-head">
   <h1>MOONMODEL</h1>
   <p class="sub">Showcase — one description, projected four ways, and checked</p>
   <div class="meta">
@@ -147,6 +161,7 @@ TEMPLATE = """<!DOCTYPE html>
     <span><a href="https://github.com/moonbitstack/moonmodel">github</a></span>
   </div>
   <nav>{{NAV}}</nav>
+  </header>
   {{SECTIONS}}
   <div class="foot">
     <span>APACHE-2.0 · MOONBITSTACK/MOONMODEL</span>

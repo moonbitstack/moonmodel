@@ -42,6 +42,7 @@
 </head>
 <body>
 <div class="wrap"><div class="sheet">
+  <header class="doc-head">
   <h1>MOONMODEL</h1>
   <p class="sub">Showcase — one description, projected four ways, and checked</p>
   <div class="meta">
@@ -51,7 +52,8 @@
     <span><a href="api.html">API reference</a></span>
     <span><a href="https://github.com/moonbitstack/moonmodel">github</a></span>
   </div>
-  <nav><a href="#the-description">the description</a><a href="#json-schema-2020-12">JSON Schema 2020-12</a><a href="#one-document-references-resolved">one document, references resolved</a><a href="#the-three-openapi-dialects">the three OpenAPI dialects</a><a href="#sql-three-dialects">SQL, three dialects</a><a href="#graphql-sdl">GraphQL SDL</a><a href="#a-document-declares-its-scalars">a document declares its scalars</a><a href="#checking-an-instance">checking an instance</a></nav>
+  <nav><a href="#the-description">description</a><a href="#json-schema-2020-12">JSON Schema</a><a href="#one-document-references-resolved">resolved</a><a href="#the-three-openapi-dialects">OpenAPI</a><a href="#sql-three-dialects">SQL</a><a href="#graphql-sdl">GraphQL</a><a href="#a-document-declares-its-scalars">scalars</a><a href="#checking-an-instance">checking</a></nav>
+  </header>
   <section class="sec" id="the-description"><h2>the description</h2><p class="intro">The description answers questions about itself — how many fields, which are required, what it refers to — before any projection runs.</p><div class="code"><button class="copy" type="button" aria-label="copy">COPY</button><pre>model      Customer — somebody with an account
 fields     16
 required   id, name, email, balance, active, joined, tier, tags, labels, home, billed_to, either, counter
