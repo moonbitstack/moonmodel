@@ -1,0 +1,13 @@
+// The sheet's data source: one model, projected four times, as JSON for a page
+// to typeset. Run it, keep the output, and the page needs no other input.
+supported_targets = "+native+wasm"
+
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonmodel",
+  "moonbitstack/moonmodel/json",
+  "moonbitstack/moonmodel/sql",
+  "moonbitstack/moonmodel/sdl",
+  "moonbitstack/moonmodel/open",
+}

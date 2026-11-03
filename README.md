@@ -107,6 +107,10 @@ implement, because a description is data and the method is the whole of it.
 written by hand, and `moon run src/examples/tour` runs all four projections and
 a check on one description that uses every part of the vocabulary.
 
+`moon run src/cmd/sheet` prints one description as a single JSON document —
+every field, four times over, with what each projection could not carry — which
+is what the project's front page is typeset from.
+
 ## Install
 
 ```bash

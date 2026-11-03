@@ -1,0 +1,15 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonmodel/cmd/sheet"
+
+// Values
+
+// Errors
+
+// Types and methods
+type Cell
+
+type Note
+
+// Type aliases
+
+// Traits
