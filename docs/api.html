@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOONMODEL — API reference</title>
+<link rel="stylesheet" href="assets/type.css">
+<link rel="stylesheet" href="assets/tokens.css">
+<style>
+  html,body{margin:0;background:var(--desk);color:var(--ink);}
+  body{font-family:'Jost',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1180px;margin:0 auto;padding:56px 40px 120px;}
+  .sheet{background:var(--paper);border:1px solid var(--ink);outline:1px solid var(--ink);
+          outline-offset:8px;padding:56px 64px;position:relative;
+          box-shadow:0 24px 60px -30px rgba(0,0,0,.55);}
+  .sheet::after{content:"";position:absolute;inset:14px;border:1px solid var(--ink);
+                 opacity:.25;pointer-events:none;}
+  h1{font-family:'Cinzel',serif;font-weight:700;letter-spacing:.16em;font-size:40px;margin:0;}
+  .sub{font-family:'EB Garamond',serif;font-style:italic;font-size:20px;opacity:.85;margin:.3em 0 0;}
+  .meta{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;opacity:.6;
+         display:flex;gap:22px;margin-top:22px;flex-wrap:wrap;}
+  .meta a{color:inherit;}
+  nav{margin:28px 0 12px;display:flex;gap:10px;flex-wrap:wrap;}
+  nav a{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;
+         text-decoration:none;color:var(--ink);border:1px solid var(--ink);
+         border-radius:14px;padding:5px 13px;opacity:.8;}
+  nav a:hover{background:var(--accent);color:var(--paper);border-color:var(--accent);}
+  .bar{display:flex;gap:12px;margin:18px 0 6px;align-items:stretch;}
+  .bar #filter{flex:1;font-family:'IBM Plex Mono',monospace;font-size:12.5px;letter-spacing:.02em;}
+  .bar #night{flex:0 0 auto;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;}
+  .pkg{margin-top:54px;border-top:1px solid var(--ink);padding-top:26px;}
+  .pkg-head h2{font-family:'IBM Plex Mono',monospace;font-size:15px;letter-spacing:.04em;
+                margin:0;color:var(--accent);}
+  .blurb{font-family:'EB Garamond',serif;font-style:italic;font-size:15px;opacity:.7;margin:.3em 0 0;}
+  h4{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;
+      text-transform:uppercase;opacity:.55;margin:30px 0 12px;}
+  .value,.method{border-left:2px solid var(--brass);padding:10px 0 10px 16px;margin:0 0 16px;}
+  .value>code,.method>code{font-family:'IBM Plex Mono',monospace;font-size:12.5px;
+      display:block;white-space:pre-wrap;word-break:break-word;line-height:1.5;}
+  .value p,.method p,.type p{font-size:14px;line-height:1.62;opacity:.86;margin:.5em 0 0;max-width:74ch;}
+  .type{margin:0 0 30px;}
+  .type h3{font-family:'Cinzel',serif;font-size:20px;letter-spacing:.06em;margin:0 0 .1em;}
+  .kind{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;
+         border:1px solid var(--ink);border-radius:9px;padding:2px 7px;opacity:.55;
+         vertical-align:middle;text-transform:uppercase;}
+  .traits{font-family:'IBM Plex Mono',monospace;font-size:10.5px;opacity:.6;margin:.4em 0;}
+  .members{list-style:none;padding:0;margin:12px 0;border-left:1px dotted var(--ink);}
+  .members li{padding:5px 0 5px 16px;font-size:13px;}
+  .members code{font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  .m-doc{display:block;font-size:12.5px;opacity:.7;margin-top:2px;}
+  .m-doc p{margin:.2em 0;}
+  .missing{color:var(--red);font-family:'IBM Plex Mono',monospace;font-size:11px;}
+  .empty{font-family:'IBM Plex Mono',monospace;font-size:11px;opacity:.45;}
+  .aliases code{font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  code{font-family:'IBM Plex Mono',monospace;}
+  p code,li code{background:rgba(0,0,0,.06);padding:.05em .3em;border-radius:3px;font-size:.92em;}
+  .foot{margin-top:64px;padding-top:18px;border-top:1px solid var(--ink);
+         font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;opacity:.6;
+         display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  a{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="sheet">
+  <h1>MOONMODEL</h1>
+  <p class="sub">API reference — one description, four projections</p>
+  <div class="meta">
+    <span>SHEET 02 / 01 · THE SURFACE</span>
+    <span><a href="index.html">← the front sheet</a></span>
+    <span><a href="https://github.com/moonbitstack/moonmodel">github</a></span>
+  </div>
+  <nav><a href="#pkg-moonmodel">moonmodel</a><a href="#pkg-moonmodel-json">moonmodel/json</a><a href="#pkg-moonmodel-open">moonmodel/open</a><a href="#pkg-moonmodel-sql">moonmodel/sql</a><a href="#pkg-moonmodel-sdl">moonmodel/sdl</a><a href="#pkg-moonmodel-verify">moonmodel/verify</a></nav>
+  <div class="bar">
+    <input id="filter" type="text" autocomplete="off"
+           placeholder="filter the surface — a type, a value, a method…">
+    <button id="night" type="button">EDITION 1 — CHART</button>
+  </div>
+  
+        <section class="pkg" id="pkg-moonmodel">
+          <header class="pkg-head">
+            <h2>moonmodel</h2>
+            <p class="blurb">the description itself — Model, Field, Check, Type; no dependencies</p>
+          </header>
+          <h4>values</h4>
+          <div class="values"><div class="value"><code>check : Check</code><p>No bound at all, which is what most fields carry.</p></div></div>
+          <h4>types</h4>
+          <div class="types"><article class="type"><h3 id="Check">Check <span class="kind">struct</span></h3><p class="traits">carries Eq, Debug</p><p>The bounds a value must satisfy.</p><p>The names avoid <code>min</code> and <code>max</code>, which mean different things in the four<br>targets: <code>least</code> and <code>most</code> are the closed bounds, <code>under</code> and <code>over</code> the<br>open ones (JSON Schema's <code>exclusiveMinimum</code> and <code>exclusiveMaximum</code>).<br><code>shortest</code> and <code>longest</code> bound a string's characters and a list's items<br>alike, which is how every one of the four spells it too.</p><ul class="members"><li><code>least : Double?</code></li><li><code>most : Double?</code></li><li><code>over : Double?</code></li><li><code>under : Double?</code></li><li><code>step : Double?</code></li><li><code>shortest : Int32?</code></li><li><code>longest : Int32?</code></li><li><code>pattern : String?</code></li><li><code>format : String?</code></li><li><code>options : Array[@json.Json]</code></li><li><code>distinct : Bool</code></li><li><code>unique : Bool</code></li></ul><div class="methods"><div class="method"><code>fn Check::is_empty(Self) -&gt; Bool</code><p>Whether anything is bounded at all, which is how a projection decides to<br>write nothing rather than an empty object.</p></div><div class="method"><code>fn Check::new(least? : Double, most? : Double, over? : Double, under? : Double, step? : Double, shortest? : Int32, longest? : Int32, pattern? : String, format? : String, options? : Array[@json.Json], distinct? : Bool, unique? : Bool) -&gt; Self</code><p>A <code>Check</code> by name, so a caller states the one bound it means.</p></div></div></article><article class="type"><h3 id="Field">Field <span class="kind">struct</span></h3><p class="traits">carries Eq, Debug</p><p>One field of a model.</p><p><code>required</code> and <code>nullable</code> are two questions, not one. The first asks<br>whether the key has to be there, the second whether its value may be null.<br>JSON Schema keeps them apart (<code>required</code> is a list on the object, <code>null</code> is<br>a type), SQL's <code>NOT NULL</code> is the second alone, and GraphQL's <code>!</code> is both at<br>once. Folding them into one field would leave at least one projection<br>guessing.</p><ul class="members"><li><code>name : String</code></li><li><code>kind : Type</code></li><li><code>required : Bool</code></li><li><code>nullable : Bool</code></li><li><code>doc : String</code></li><li><code>default : @json.Json?</code></li><li><code>check : Check</code></li></ul><div class="methods"><div class="method"><code>fn Field::new(String, Type, required? : Bool, nullable? : Bool, doc? : String, default? : @json.Json, check? : Check) -&gt; Self</code><p>A field. Required by default, because a type whose fields are all optional<br>describes almost nothing, and because every one of the four targets treats<br>"present" as the ordinary case.</p></div></div></article><article class="type"><h3 id="Layout">Layout <span class="kind">struct</span></h3><p class="traits">carries Eq, Debug</p><p>A value as a byte format lays it out.</p><p>A document says what a value is. A format that writes bytes also fixes how<br>wide it is, whether it carries a sign, which byte comes first, and whether<br>it is written where it stands or as an offset to somewhere else. The four<br>belong to the type rather than to the value: every value of the type is<br>laid out the same way, and a reader has to know before it looks at one.</p><p>A projection that writes a document reads <code>kind</code> and says nothing about the<br>rest, because a document has no width and no offset. The width alone is<br>still worth writing as a <code>format</code>, which is how the JSON family already<br>distinguishes <code>int32</code> from <code>int64</code>.</p><ul class="members"><li><code>kind : Type</code></li><li><code>bits : Int32?</code></li><li><code>unsigned : Bool</code></li><li><code>order : Order</code></li><li><code>reference : Bool</code></li></ul><div class="methods"><div class="method"><code>fn Layout::format(Self) -&gt; String?</code><p>The <code>format</code> this layout asks for: <code>int8</code>, <code>uint16</code>, <code>float32</code>.</p><p><code>None</code> when the layout fixes no width of its own, or when the kind is not<br>a number — a width on anything else is not a width, and writing one would<br>make a reader think the format had said something it did not.</p></div><div class="method"><code>fn Layout::new(Type, bits? : Int32, unsigned? : Bool, order? : Order, reference? : Bool) -&gt; Self</code><p>A layout: the kind, and how a format writes it.</p><p>Every part but the kind has the common answer as its default, so a format<br>whose numbers are little-endian and written in place says only the width.</p></div></div></article><article class="type"><h3 id="Model">Model <span class="kind">struct</span></h3><p class="traits">carries Eq, Debug</p><p>A named type and its fields.</p><ul class="members"><li><code>name : String</code></li><li><code>doc : String</code></li><li><code>fields : Array[Field]</code></li></ul><div class="methods"><div class="method"><code>fn Model::field(Self, String) -&gt; Field?</code><p>One field by name, for a projection that needs to look one up.</p></div><div class="method"><code>fn Model::mentions(Self) -&gt; Array[String]</code><p>Every model named by a <code>Ref</code> anywhere in this one, in the order met and<br>without repeats.</p><p>A projection that writes a document rather than a fragment needs this: it<br>has to emit the models this one points at, and the ones those point at.</p></div><div class="method"><code>fn Model::new(String, Array[Field], doc? : String) -&gt; Self</code></div><div class="method"><code>fn Model::required(Self) -&gt; Array[String]</code><p>The names of the fields that must be present, in declaration order —<br>JSON Schema's <code>required</code> array, and the test every projection applies.</p></div></div></article><article class="type"><h3 id="Order">Order <span class="kind">enum</span></h3><p class="traits">carries Eq, Debug</p><p>Which end of a number comes first.</p><ul class="members"><li><code>Little</code></li><li><code>Big</code><span class="m-doc"><p>Most significant byte first, which is what a network order is.</p></span></li></ul></article><article class="type"><h3 id="Type">Type <span class="kind">enum</span></h3><p class="traits">carries Eq, Debug</p><p>What a value is, in the smallest set all four projections recognise.</p><p><code>Ref</code> names another model rather than nesting it, so two models may point<br>at each other and a projection decides for itself whether to inline or to<br>emit a reference — <code>$ref</code> in JSON Schema, a foreign key in SQL, a named<br>type in SDL.</p><ul class="members"><li><code>Bool</code></li><li><code>Int</code><span class="m-doc"><p>A 32-bit integer.</p></span></li><li><code>Big</code><span class="m-doc"><p>A 64-bit integer. Separate from <code>Int</code> because SQL and GraphQL both care<br>which one, and because JSON numbers past 2^53 do not survive a double.</p></span></li><li><code>Real</code></li><li><code>Text</code></li><li><code>Bytes</code></li><li><code>Stamp</code><span class="m-doc"><p>A moment in time. Only a format that defines one reads into this; see<br><code>Check::format</code> for the other case, where a date is a string being<br>checked rather than a date being parsed.</p></span></li><li><code>List(Type)</code></li><li><code>Dict(Type)</code><span class="m-doc"><p>A mapping with text keys. SQL and GraphQL have no such thing, and say so<br>in their own way.</p></span></li><li><code>Ref(String)</code><span class="m-doc"><p>Another model, by name.</p></span></li><li><code>Nest(Model)</code><span class="m-doc"><p>Another model, written here. For the one that has no name of its own and<br>so cannot be referred to; a named one belongs in <code>Ref</code> so that the<br>projections can hoist it and point at it once.</p></span></li><li><code>Wire(Layout)</code><span class="m-doc"><p>A value as a byte format lays it out: its kind, and a width, a sign, a<br>byte order and a reference mark that a document has no word for.</p><p>The kind inside is what a document projection writes; the four layout<br>facts are read by the projection that writes bytes, and by anything that<br>has to agree with a peer on the shape of a message.</p></span></li><li><code>Any</code><span class="m-doc"><p>Anything at all: JSON Schema's empty schema.</p></span></li><li><code>Raw(@json.Json)</code><span class="m-doc"><p>A schema written out in full, for what this vocabulary cannot say —<br><code>allOf</code>, a vocabulary of one's own, a dialect's extension. Each<br>projection either passes it through as it stands or reports that it<br>cannot carry it. Reach for it last: nothing reads inside it.</p></span></li></ul><div class="methods"><div class="method"><code>fn Type::of_word(String) -&gt; Self?</code><p>The type a word stands for, when it is one of the words <code>word</code> writes.</p><p>Read the suffixes from the right first: <code>uint16-be-ref</code> is a <code>uint16</code> in<br>big-endian order, written by reference. A word fixes what the kind and the<br>width agree on, so a layout that contradicts its own kind — an <code>Int</code> at 64<br>bits — is written at the width it states and read back as the kind that<br>width belongs to.</p></div><div class="method"><code>fn Type::word(Self) -&gt; String?</code><p>The word a scalar type is written with: what <code>#model.field(kind=…)</code> takes,<br>and what a report calls it.</p><p><code>None</code> for a type with parts inside — a list, a mapping, a model, a schema<br>written out — because one word cannot carry what is in it. A layout's word<br>adds <code>-be</code> for a big-endian number and <code>-ref</code> for one written by reference;<br>both are read back by <code>of_word</code>, so a word and a type round-trip.</p></div></div></article></div>
+          
+        </section>
+        <section class="pkg" id="pkg-moonmodel-json">
+          <header class="pkg-head">
+            <h2>moonmodel/json</h2>
+            <p class="blurb">JSON Schema 2020-12</p>
+          </header>
+          <h4>values</h4>
+          <div class="values"><div class="value"><code>defs : String</code><p>Where <code>Ref</code> points when a schema is written as a fragment of a larger<br>document (<code>$defs</code> is 2020-12's; older drafts said <code>definitions</code>).</p></div><div class="value"><code>fn document(@moonmodel.Model, known? : Array[@moonmodel.Model], draft? : String) -&gt; @moonbitlang/core/json.Json</code><p>A whole document: the model, and every model it mentions, under <code>$defs</code>.</p><p><code>known</code> is where the referenced models are looked up. One that is missing<br>is left as a dangling <code>$ref</code> rather than refused — a schema that names a<br>type defined elsewhere is ordinary, and this package cannot know whether<br>the reader has it.</p></div><div class="value"><code>fn of(@moonmodel.Model, at? : String, draft? : String, title? : Bool) -&gt; @moonbitlang/core/json.Json</code><p>A model as a JSON Schema object.</p><p><code>at</code> is the prefix a <code>Ref</code> is resolved against, so the same model can be<br>written into a bare document or into one component of an OpenAPI file by<br>changing one argument rather than by rewriting the schema.</p><p><code>draft</code> writes the <code>$schema</code> line. Left out there is none, which is what a<br>fragment wants; a whole document should say which dialect it is.</p></div></div>
+          <h4>types</h4>
+          <div class="types"><p class="empty">no named types</p></div>
+          
+        </section>
+        <section class="pkg" id="pkg-moonmodel-open">
+          <header class="pkg-head">
+            <h2>moonmodel/open</h2>
+            <p class="blurb">an OpenAPI Schema Object, three dialects</p>
+          </header>
+          <h4>values</h4>
+          <div class="values"><div class="value"><code>fn of(@moonmodel.Model, dialect? : Dialect, title? : Bool) -&gt; @json.Json</code><p>A model as a JSON Schema object.</p><p><code>at</code> is the prefix a <code>Ref</code> is resolved against, so the same model can be<br>written into a bare document or into one component of an OpenAPI file by<br>changing one argument rather than by rewriting the schema.</p><p><code>draft</code> writes the <code>$schema</code> line. Left out there is none, which is what a<br>fragment wants; a whole document should say which dialect it is.</p></div><div class="value"><code>fn schemas(ArrayView[@moonmodel.Model], dialect? : Dialect) -&gt; @json.Json</code><p>Everything the model reaches, under the key the dialect keeps them in.</p><p>The envelope differs: 2.0 puts them at the top level under <code>definitions</code>,<br>3.x one level down under <code>components.schemas</code>.</p></div></div>
+          <h4>types</h4>
+          <div class="types"><article class="type"><h3 id="Dialect">Dialect <span class="kind">enum</span></h3><p class="traits">carries Eq, Debug</p><p>Which OpenAPI a document is written for.</p><ul class="members"><li><code>Swagger20</code><span class="m-doc"><p>Swagger 2.0, whose Schema Object is a draft-4 subset.</p></span></li><li><code>OpenApi30</code><span class="m-doc"><p>OpenAPI 3.0.3, still draft-4 shaped but with a <code>nullable</code> flag.</p></span></li><li><code>OpenApi31</code><span class="m-doc"><p>OpenAPI 3.1.0, which is JSON Schema 2020-12 exactly.</p></span></li></ul><div class="methods"><div class="method"><code>fn Dialect::at(Self) -&gt; String</code><p>Where a named schema lives, which is the one thing 2.0 moved.</p></div><div class="method"><code>fn Dialect::holder(Self) -&gt; String</code><p>The key a document stores its named schemas under.</p></div></div></article></div>
+          
+        </section>
+        <section class="pkg" id="pkg-moonmodel-sql">
+          <header class="pkg-head">
+            <h2>moonmodel/sql</h2>
+            <p class="blurb">columns and CREATE TABLE, three dialects</p>
+          </header>
+          <h4>values</h4>
+          <div class="values"><div class="value"><code>fn of(@moonmodel.Model, dialect? : Dialect) -&gt; (Array[Column], Array[Skipped])</code><p>A model as a JSON Schema object.</p><p><code>at</code> is the prefix a <code>Ref</code> is resolved against, so the same model can be<br>written into a bare document or into one component of an OpenAPI file by<br>changing one argument rather than by rewriting the schema.</p><p><code>draft</code> writes the <code>$schema</code> line. Left out there is none, which is what a<br>fragment wants; a whole document should say which dialect it is.</p></div><div class="value"><code>fn table(@moonmodel.Model, dialect? : Dialect, name? : String) -&gt; String</code><p><code>CREATE TABLE</code>, with the fields that have no column left out — the caller<br>reads the second half of <code>of</code> to learn which.</p></div></div>
+          <h4>types</h4>
+          <div class="types"><article class="type"><h3 id="Column">Column <span class="kind">struct</span></h3><p class="traits">carries Eq, Debug</p><p>One column.</p><ul class="members"><li><code>name : String</code></li><li><code>kind : String</code></li><li><code>null : Bool</code></li><li><code>default : String?</code></li><li><code>unique : Bool</code></li><li><code>check : String</code></li></ul></article><article class="type"><h3 id="Dialect">Dialect <span class="kind">enum</span></h3><p class="traits">carries Eq, Debug</p><p>Which OpenAPI a document is written for.</p><ul class="members"><li><code>Sqlite</code></li><li><code>Postgres</code></li><li><code>Mysql</code></li></ul></article><article class="type"><h3 id="Skipped">Skipped <span class="kind">struct</span></h3><p class="traits">carries Eq, Debug</p><p>A field GraphQL has no type for, and why.</p><ul class="members"><li><code>field : String</code></li><li><code>why : String</code></li></ul></article></div>
+          
+        </section>
+        <section class="pkg" id="pkg-moonmodel-sdl">
+          <header class="pkg-head">
+            <h2>moonmodel/sdl</h2>
+            <p class="blurb">GraphQL SDL</p>
+          </header>
+          <h4>values</h4>
+          <div class="values"><div class="value"><code>bytes : String</code><p>The scalar bytes are written as, for the same reason.</p></div><div class="value"><code>fn document(ArrayView[@moonmodel.Model], stamp? : String, bytes? : String) -&gt; String</code><p>A whole document: the model, and every model it mentions, under <code>$defs</code>.</p><p><code>known</code> is where the referenced models are looked up. One that is missing<br>is left as a dangling <code>$ref</code> rather than refused — a schema that names a<br>type defined elsewhere is ordinary, and this package cannot know whether<br>the reader has it.</p></div><div class="value"><code>fn of(@moonmodel.Model, input? : Bool, stamp? : String, bytes? : String) -&gt; (String, Array[Skipped])</code><p>A model as a JSON Schema object.</p><p><code>at</code> is the prefix a <code>Ref</code> is resolved against, so the same model can be<br>written into a bare document or into one component of an OpenAPI file by<br>changing one argument rather than by rewriting the schema.</p><p><code>draft</code> writes the <code>$schema</code> line. Left out there is none, which is what a<br>fragment wants; a whole document should say which dialect it is.</p></div><div class="value"><code>stamp : String</code><p>The scalar a <code>Stamp</code> is written as.</p><p>GraphQL has five built-in scalars and no date among them, so every schema<br>that carries one declares a custom scalar. <code>DateTime</code> is what the<br>ecosystem settled on; a schema using another name says so here.</p></div></div>
+          <h4>types</h4>
+          <div class="types"><article class="type"><h3 id="Skipped">Skipped <span class="kind">struct</span></h3><p class="traits">carries Eq, Debug</p><p>A field GraphQL has no type for, and why.</p><ul class="members"><li><code>field : String</code></li><li><code>why : String</code></li></ul></article></div>
+          
+        </section>
+        <section class="pkg" id="pkg-moonmodel-verify">
+          <header class="pkg-head">
+            <h2>moonmodel/verify</h2>
+            <p class="blurb">a verdict on an instance</p>
+          </header>
+          <h4>values</h4>
+          <div class="values"><div class="value"><code>fn faults(@moonmodel.Model, @json.Json, known? : Array[@moonmodel.Model]) -&gt; Array[@moonschema.Fault] raise</code><p>Every reason the instance does not conform, in the order the walk found<br>them; empty when it does.</p><p>A fault says where in the instance it happened and which keyword refused<br>it, so a caller can answer with the field's name rather than with "no".</p></div><div class="value"><code>fn schema(@moonmodel.Model, known? : Array[@moonmodel.Model]) -&gt; @moonschema.Schema raise</code><p>The model as a schema a reader can check instances against.</p><p>A description is not a validator and does not become one here: it is<br>written out as JSON Schema 2020-12 — the form the projections already agree<br>on — and handed to something that knows the specification. What an instance<br>is checked against is therefore the schema this library publishes, not a<br>second opinion about it.</p><p><code>known</code> is where the models a <code>Ref</code> names are looked up, and one that is<br>missing is refused by name: a document that points at a model it does not<br>carry cannot be checked, and quietly refusing every instance would blame<br>the instance for it.</p><p>Reading a description that is not a schema at all — a <code>Raw</code> that says<br>something no draft defines — raises too. Both are defects in the<br>description, which is a different thing from an instance that does not<br>conform.</p></div><div class="value"><code>fn valid(@moonmodel.Model, @json.Json, known? : Array[@moonmodel.Model]) -&gt; Bool raise</code><p>Whether an instance conforms.</p><p>One call reads the schema and checks one instance. Checking many is worth<br>holding the <code>Schema</code> from <code>schema</code> instead, which reads the description<br>once.</p></div></div>
+          <h4>types</h4>
+          <div class="types"><article class="type"><h3 id="Refused">Refused <span class="kind">suberror</span></h3><p>Why a description could not be read as a schema.</p><ul class="members"><li><code>Missing(name~ : String)</code><span class="m-doc"><p>A model the description names, which the call did not hand over.</p><p>A reference the document cannot resolve is not an instance that fails to<br>conform; refusing here keeps the two apart, because a validator asked<br>about an unresolvable <code>$ref</code> can only answer "no" to everything.</p></span></li></ul></article></div>
+          
+        </section>
+  <div class="foot">
+    <span>APACHE-2.0 · MOONBITSTACK/MOONMODEL</span>
+    <span>moon add moonbitstack/moonmodel</span>
+  </div>
+</div></div>
+<script>
+  const filter = document.getElementById('filter');
+  filter.addEventListener('input', () => {
+    const q = filter.value.trim().toLowerCase();
+    document.querySelectorAll('.type,.value').forEach(n => {
+      n.style.display = (!q || n.textContent.toLowerCase().includes(q)) ? '' : 'none';
+    });
+    document.querySelectorAll('.pkg').forEach(p => {
+      const any = [...p.querySelectorAll('.type,.value')].some(n => n.style.display !== 'none');
+      p.style.display = any ? '' : 'none';
+    });
+  });
+  const nightBtn = document.getElementById('night');
+  function setNight(on) {
+    document.documentElement.classList.toggle('night', on);
+    nightBtn.textContent = on ? 'EDITION 2 — NIGHT' : 'EDITION 1 — CHART';
+  }
+  nightBtn.addEventListener('click', () =>
+    setNight(!document.documentElement.classList.contains('night')));
+  if (location.search.includes('night')) setNight(true);
+</script>
+</body>
+</html>

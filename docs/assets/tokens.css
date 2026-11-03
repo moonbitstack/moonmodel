@@ -1,0 +1,121 @@
+/* ============================================================================
+   MOONMODEL — Victoria III / nautical-chart design tokens
+   ----------------------------------------------------------------------------
+   Extracted from the Victoria 3 reference: an aged chart by day, the brass-on-
+   navy menu by night. Four roles do all the work below:
+
+     --paper   the sheet itself (the chart / the panel)
+     --ink     the primary mark (sepia by day, cream by night)
+     --accent  the one brass that carries interaction
+     --desk    the sea around the sheet
+
+   Every other token is a derivation; the ornament gold (--brass) and the
+   correction red (--red) are the two a chart always keeps in reserve.
+   ============================================================================ */
+
+:root{
+  /* --- day: a bright nautical chart ------------------------------------- */
+  --paper:    #e8dfc6;   /* aged parchment the chart is drawn on            */
+  --paper-hi: #f1ead6;   /* the lighter wash inside the frame               */
+  --sea:      #d9d0b4;   /* the shallow sea the sheet floats on             */
+  --desk:     #c9bfa1;   /* the darker desk beyond the sea                  */
+
+  --ink:      #2c2114;   /* sepia ink — the hand that drew the coast        */
+  --ink-soft: #6f5c41;   /* faded sepia for secondary text                  */
+  --ink-faint:#a89b7e;   /* graticule, station lines, the barely-there ink  */
+
+  --accent:   #8a5a1e;   /* brass, darkened so it holds on parchment        */
+  --brass:    #b08d4a;   /* ornament gold — frames, pips, filigree          */
+  --brass-hi: #c9a95c;   /* the bright edge of a brass rule                 */
+  --red:      #a63a2e;   /* a chart's correction red — the × a projection  */
+                         /* writes when it cannot carry a field             */
+  --route:    #6f8ea3;   /* a dashed shipping route, faded blue-grey        */
+}
+
+/* --- night: the brass-on-navy menu, designed, not borrowed --------------- */
+html.night{
+  --paper:    #1b222c;   /* the panel, a deep navy charcoal                 */
+  --paper-hi: #232c3a;   /* its lighter top edge                            */
+  --sea:      #121a24;   /* the sea gone dark                               */
+  --desk:     #0c1118;   /* the desk nearly black                           */
+
+  --ink:      #e6ddc4;   /* cream ink on the dark panel                     */
+  --ink-soft: #9aa3ad;   /* a cold grey for secondary text                  */
+  --ink-faint:#39434f;   /* graticule and stations, faint in the dark       */
+
+  --accent:   #c9a95c;   /* brass, bright against navy                      */
+  --brass:    #c9a95c;   /* the same brass, now the ornament itself         */
+  --brass-hi: #e0c884;   /* a brightening edge                              */
+  --red:      #c8605a;   /* a lighter correction red for the dark ground    */
+  --route:    #5a7f97;   /* a route line that reads on the dark ground      */
+}
+
+/* ============================================================================
+   NATIVE CHROME, DRESSED — there is no browser default left on the sheet.
+   The scrollbar is brass on parchment; every control is drawn from the same
+   four roles, so a form reads as part of the chart and not as a widget.
+   ============================================================================ */
+
+/* --- the scrollbar: a brass thumb on a faint ink track ------------------- */
+html{scrollbar-color:var(--accent) transparent;scrollbar-width:thin;}
+*{
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+*::-webkit-scrollbar{width:11px;height:11px;}
+*::-webkit-scrollbar-track{background:transparent;}
+*::-webkit-scrollbar-thumb{
+  background:var(--accent);
+  border:3px solid var(--desk);
+  border-radius:6px;
+}
+*::-webkit-scrollbar-thumb:hover{background:var(--brass-hi);}
+*::-webkit-scrollbar-corner{background:transparent;}
+
+/* --- controls: no rounded default, no system blue ------------------------ */
+input,select,textarea,button{
+  font:inherit;
+  color:var(--ink);
+  background:var(--paper-hi);
+  border:1px solid var(--ink);
+  border-radius:0;
+  padding:.55em .8em;
+  outline:none;
+  appearance:none;-webkit-appearance:none;
+  transition:border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+input::placeholder,textarea::placeholder{color:var(--ink-soft);opacity:.7;}
+input:focus,select:focus,textarea:focus,button:focus-visible{
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px var(--accent);
+}
+button{
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  font-size:.8em;
+  cursor:pointer;
+  background:var(--paper);
+}
+button:hover{background:var(--accent);color:var(--paper);border-color:var(--accent);}
+select{
+  padding-right:2em;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),
+                   linear-gradient(135deg,var(--ink) 50%,transparent 50%);
+  background-position:calc(100% - 15px) 55%, calc(100% - 10px) 55%;
+  background-size:5px 5px,5px 5px;
+  background-repeat:no-repeat;
+}
+/* checkbox and radio drawn by hand, in brass */
+input[type="checkbox"],input[type="radio"]{
+  width:1.05em;height:1.05em;padding:0;cursor:pointer;position:relative;
+  border:1px solid var(--ink);background:var(--paper-hi);
+}
+input[type="radio"]{border-radius:50%;}
+input[type="checkbox"]:checked{background:var(--accent);border-color:var(--accent);}
+input[type="checkbox"]:checked::after{
+  content:"";position:absolute;left:32%;top:12%;width:30%;height:56%;
+  border:solid var(--paper);border-width:0 2px 2px 0;transform:rotate(42deg);
+}
+input[type="radio"]:checked::after{
+  content:"";position:absolute;inset:22%;border-radius:50%;background:var(--accent);
+}

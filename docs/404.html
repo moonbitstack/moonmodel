@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" class="night">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>404 — nothing to project · MOONMODEL</title>
+<link rel="stylesheet" href="assets/type.css">
+<link rel="stylesheet" href="assets/tokens.css">
+<style>
+  html,body{height:100%;margin:0;background:var(--desk);overflow:hidden;}
+  body{
+    font-family:'Jost',ui-sans-serif,"Helvetica Neue",Arial,sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  svg{max-width:100%;max-height:100%;}
+  text{fill:var(--ink);}
+
+  .frame{fill:none;stroke:var(--ink);stroke-width:.9;opacity:.55;}
+  .rule{stroke:var(--ink);stroke-width:.8;opacity:.42;}
+  .crop{stroke:var(--ink);stroke-width:.8;opacity:.40;}
+  .dash{fill:none;stroke:var(--accent);stroke-width:1;opacity:.75;stroke-dasharray:5 5;}
+  .pip{fill:var(--accent);}
+  .rail text{font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:.18em;opacity:.55;}
+
+  .wordmark{font-family:'Cinzel',Georgia,serif;font-size:13px;font-weight:700;letter-spacing:.34em;opacity:.8;}
+  .big{font-family:'Cinzel',Georgia,serif;font-size:200px;font-weight:700;letter-spacing:.02em;line-height:1;}
+  .thesis{font-family:'EB Garamond',Palatino,Georgia,serif;font-style:italic;font-size:31px;opacity:.92;}
+  .code{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.02em;opacity:.62;}
+  .caption{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.22em;opacity:.72;}
+  .meta{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;opacity:.55;}
+
+  .pill{fill:none;stroke:var(--ink);stroke-width:1;opacity:.45;}
+  .pill-text{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;opacity:.9;}
+
+  @media (max-width: 900px){
+    .big{font-size:150px;}
+    .thesis{font-size:22px;}
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg viewBox="0 0 2480 1240" width="2480" height="1240" xmlns="http://www.w3.org/2000/svg"
+       aria-label="404: this address is a reference the document does not carry">
+    <defs>
+      <filter id="grain" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/>
+        <feColorMatrix type="saturate" values="0"/>
+      </filter>
+    </defs>
+
+    <rect x="0" y="0" width="2480" height="1240" fill="var(--paper)"/>
+
+    <g class="crop">
+      <path d="M40 68 V40 H68"/><path d="M2412 40 H2440 V68"/>
+      <path d="M40 1172 V1200 H68"/><path d="M2412 1200 H2440 V1172"/>
+    </g>
+    <rect class="frame" x="40" y="40" width="2400" height="1160"/>
+
+    <text class="wordmark" x="64" y="104">MOONMODEL</text>
+    <text class="big" x="58" y="352">404</text>
+    <text class="thesis" x="66" y="414">This address is a reference the document does not carry.</text>
+    <text class="code" x="66" y="452">raise Refused::Missing(name: "this page")</text>
+
+    <text class="caption" x="64" y="516">FOUR READINGS, NONE OF THEM HERE</text>
+
+    <!-- four readings, none of which has anything to say at this address -->
+    <g class="rail">
+      <text x="64" y="563">JSON</text><text x="64" y="643">OPENAPI</text>
+      <text x="64" y="723">SQL</text><text x="64" y="803">SDL</text>
+    </g>
+    <g class="rule">
+      <path d="M164 560 H1216"/><path d="M1804 560 H2416"/>
+      <path d="M164 640 H1216"/><path d="M1804 640 H2416"/>
+      <path d="M164 720 H1216"/><path d="M1804 720 H2416"/>
+      <path d="M164 800 H1216"/><path d="M1804 800 H2416"/>
+    </g>
+    <g class="pip">
+      <circle cx="1206" cy="560" r="3.4"/><circle cx="1206" cy="640" r="3.4"/>
+      <circle cx="1206" cy="720" r="3.4"/><circle cx="1206" cy="800" r="3.4"/>
+    </g>
+
+    <!-- the hole: what no projection can fill -->
+    <rect class="dash" x="1216" y="504" width="588" height="352"/>
+    <text class="caption" x="1240" y="536">NOTHING TO PROJECT</text>
+    <text class="code" x="1240" y="564" opacity=".45">no field, no column, no type</text>
+
+    <a href="index.html">
+      <g>
+        <rect class="pill" x="64" y="1046" width="268" height="34" rx="17"/>
+        <text class="pill-text" x="86" y="1068">← BACK TO THE SHEET</text>
+      </g>
+    </a>
+
+    <text class="meta" x="2416" y="1068" text-anchor="end">moon add moonbitstack/moonmodel</text>
+    <text class="meta" x="64" y="1128">SHEET 00 / 00 · SCALE 1:1 · EDITION 2 — NIGHT</text>
+
+    <rect x="0" y="0" width="2480" height="1240" filter="url(#grain)" opacity="0.045"
+          style="pointer-events:none"/>
+  </svg>
+</div>
+</body>
+</html>

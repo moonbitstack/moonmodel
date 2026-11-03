@@ -1,0 +1,65 @@
+{
+  "model": "User",
+  "doc": "somebody with an account",
+  "stat": { "fields": 10, "required": 7, "lost": 6 },
+  "fields": [
+    { "name": "id", "type": "Big", "doc": "assigned by the database", "required": true, "station_lost": null, "cells": {
+        "json": {"lines": ["\"type\": \"integer\",", "\"format\": \"int64\",", "\"description\": \"…\""], "spell": "integer int64", "lost": "a"},
+        "openapi": {"lines": ["\"type\": \"integer\",", "\"format\": \"int64\",", "\"description\": \"…\""], "spell": "integer int64", "lost": "a"},
+        "sql": {"lines": ["id BIGINT NOT NULL UNIQUE"], "spell": "BIGINT UNIQUE", "lost": null},
+        "sdl": {"lines": ["id: String!"], "spell": "String!", "lost": "b"} } },
+    { "name": "name", "type": "Text", "doc": "", "required": true, "station_lost": null, "cells": {
+        "json": {"lines": ["\"type\": \"string\",", "\"minLength\": 1,", "\"maxLength\": 64"], "spell": "string 1…64", "lost": null},
+        "openapi": {"lines": ["\"type\": \"string\",", "\"minLength\": 1,", "\"maxLength\": 64"], "spell": "string 1…64", "lost": null},
+        "sql": {"lines": ["name TEXT NOT NULL CHECK", "  (length(name) <= 64 AND", "  length(name) >= 1)"], "spell": "TEXT + CHECK", "lost": null},
+        "sdl": {"lines": ["name: String!"], "spell": "String!", "lost": null} } },
+    { "name": "email", "type": "Text?", "doc": "", "required": false, "station_lost": null, "cells": {
+        "json": {"lines": ["\"type\": [\"string\", \"null\"],", "\"format\": \"email\""], "spell": "string email|null", "lost": null},
+        "openapi": {"lines": ["\"type\": \"string\",", "\"format\": \"email\",", "\"nullable\": true"], "spell": "string email|null", "lost": null},
+        "sql": {"lines": ["email TEXT"], "spell": "TEXT", "lost": null},
+        "sdl": {"lines": ["email: String"], "spell": "String", "lost": null} } },
+    { "name": "age", "type": "Int?", "doc": "", "required": false, "station_lost": null, "cells": {
+        "json": {"lines": ["\"type\": [\"integer\", \"null\"],", "\"format\": \"int32\",", "\"minimum\": 0,", "\"maximum\": 150"], "spell": "integer int32 0…150|null", "lost": null},
+        "openapi": {"lines": ["\"type\": \"integer\",", "\"format\": \"int32\",", "\"minimum\": 0,", "\"maximum\": 150,", "\"nullable\": true"], "spell": "integer int32 0…150|null", "lost": null},
+        "sql": {"lines": ["age INTEGER CHECK (age >= 0 AND", "  age <= 150)"], "spell": "INTEGER + CHECK", "lost": null},
+        "sdl": {"lines": ["age: Int"], "spell": "Int", "lost": null} } },
+    { "name": "role", "type": "Text", "doc": "", "required": true, "station_lost": null, "cells": {
+        "json": {"lines": ["\"type\": \"string\",", "\"enum\": [\"Admin\", \"Member\",", "  \"Guest\"]"], "spell": "string enum 3", "lost": null},
+        "openapi": {"lines": ["\"type\": \"string\",", "\"enum\": [\"Admin\", \"Member\",", "  \"Guest\"]"], "spell": "string enum 3", "lost": null},
+        "sql": {"lines": ["role TEXT NOT NULL CHECK (role IN", "  ('Admin', 'Member', 'Guest'))"], "spell": "TEXT + CHECK", "lost": null},
+        "sdl": {"lines": ["role: String!"], "spell": "String!", "lost": "c"} } },
+    { "name": "weight", "type": "Real", "doc": "", "required": false, "station_lost": null, "cells": {
+        "json": {"lines": ["\"type\": \"number\",", "\"exclusiveMinimum\": 0,", "\"default\": 1"], "spell": "number >0 =1", "lost": null},
+        "openapi": {"lines": ["\"type\": \"number\",", "\"minimum\": 0,", "\"exclusiveMinimum\": true,", "\"default\": 1"], "spell": "number ≥0 open =1", "lost": null},
+        "sql": {"lines": ["weight DOUBLE PRECISION DEFAULT 1", "  CHECK (weight > 0)"], "spell": "DOUBLE PRECISION + CHECK", "lost": null},
+        "sdl": {"lines": ["weight: Float"], "spell": "Float", "lost": null} } },
+    { "name": "home", "type": "Ref", "doc": "", "required": true, "station_lost": null, "cells": {
+        "json": {"lines": ["\"$ref\": \"…/Address\""], "spell": "ref Address", "lost": null},
+        "openapi": {"lines": ["\"$ref\": \"…/Address\""], "spell": "ref Address", "lost": null},
+        "sql": {"lines": [], "spell": "—", "lost": "d"},
+        "sdl": {"lines": ["home: Address!"], "spell": "Address!", "lost": null} } },
+    { "name": "tags", "type": "List[Text]", "doc": "", "required": true, "station_lost": null, "cells": {
+        "json": {"lines": ["\"type\": \"array\",", "\"items\": { \"type\": \"string\" },", "\"maxItems\": 8,", "\"uniqueItems\": true"], "spell": "array", "lost": null},
+        "openapi": {"lines": ["\"type\": \"array\",", "\"items\": { \"type\": \"string\" },", "\"maxItems\": 8,", "\"uniqueItems\": true"], "spell": "array", "lost": null},
+        "sql": {"lines": ["tags TEXT[] NOT NULL CHECK", "  (length(tags) <= 8)"], "spell": "TEXT[] + CHECK", "lost": null},
+        "sdl": {"lines": ["tags: [String!]!"], "spell": "[String!]!", "lost": null} } },
+    { "name": "joined", "type": "Stamp", "doc": "", "required": true, "station_lost": null, "cells": {
+        "json": {"lines": ["\"type\": \"string\",", "\"format\": \"date-time\""], "spell": "string date-time", "lost": null},
+        "openapi": {"lines": ["\"type\": \"string\",", "\"format\": \"date-time\""], "spell": "string date-time", "lost": null},
+        "sql": {"lines": ["joined TIMESTAMPTZ NOT NULL"], "spell": "TIMESTAMPTZ", "lost": null},
+        "sdl": {"lines": ["joined: DateTime!"], "spell": "DateTime!", "lost": "e"} } },
+    { "name": "count", "type": "uint16-be-ref", "doc": "", "required": true, "station_lost": "f", "cells": {
+        "json": {"lines": ["\"type\": \"integer\",", "\"format\": \"uint16\""], "spell": "integer uint16", "lost": null},
+        "openapi": {"lines": ["\"type\": \"integer\",", "\"format\": \"uint16\""], "spell": "integer uint16", "lost": null},
+        "sql": {"lines": ["count SMALLINT NOT NULL"], "spell": "SMALLINT", "lost": null},
+        "sdl": {"lines": ["count: Int!"], "spell": "Int!", "lost": null} } }
+  ],
+  "notes": [
+    { "n": "a", "field": "id", "reading": "json", "why": "unique reaches SQL only: JSON Schema keeps that on the collection, not on the value." },
+    { "n": "b", "field": "id", "reading": "sdl", "why": "GraphQL's Int is 32 bits, so a 64-bit integer is carried as a String." },
+    { "n": "c", "field": "role", "reading": "sdl", "why": "a closed set of values has no GraphQL form here; the enum reaches JSON and SQL only." },
+    { "n": "d", "field": "home", "reading": "sql", "why": "a reference to Address is a foreign key, which needs that table's key" },
+    { "n": "e", "field": "joined", "reading": "sdl", "why": "GraphQL has no date; the document declares the DateTime scalar once." },
+    { "n": "f", "field": "count", "reading": "station", "why": "the width of a layout becomes a format word; its byte order and its reference mark reach no document at all." }
+  ]
+}

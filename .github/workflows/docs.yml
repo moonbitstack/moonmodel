@@ -1,0 +1,71 @@
+name: Docs
+
+# Publish the site: the front sheet and the API reference are typeset from the
+# library itself. Both are regenerated here, and the build fails if the
+# committed copy is stale — so the page a reader sees is always the library
+# this commit actually is, not a screenshot of an older one.
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "docs/**"
+      - "src/**"
+      - "scripts/**"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: post install
+        run: |
+          moon version --all
+          moon update
+
+      # The front sheet and the reference are build products. Regenerate them
+      # from the interfaces and the model, and refuse a deploy that would
+      # publish a page the source no longer agrees with.
+      - name: the sheet and the reference are up to date
+        run: |
+          python3 scripts/gen_sheet.py
+          python3 scripts/gen_api.py
+          git diff --exit-code docs/
+
+      - uses: actions/configure-pages@v6
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-26.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOONMODEL — one field description, four projections</title>
+<link rel="stylesheet" href="assets/type.css">
+<link rel="stylesheet" href="assets/tokens.css">
+<style>
+  html,body{height:100%;margin:0;background:var(--desk);overflow:hidden;}
+  body{
+    font-family:'Jost',ui-sans-serif,"Helvetica Neue",Arial,sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    cursor:grab;
+  }
+  body.dragging{cursor:grabbing;}
+  #stage{position:fixed;inset:0;overflow:hidden;touch-action:none;
+         user-select:none;-webkit-user-select:none;-ms-user-select:none;}
+  a{color:inherit;text-decoration:none;}
+
+  /* scrollbars: the sheet is a surface you pan, so it gets a bar you can drag */
+  .scroll{position:fixed;background:transparent;z-index:5;}
+  .scroll-x{left:0;right:14px;bottom:0;height:13px;cursor:default;}
+  .scroll-y{top:0;bottom:14px;right:0;width:13px;cursor:default;}
+  .scroll .track{position:absolute;background:var(--ink);opacity:.10;}
+  .scroll-x .track{left:0;right:0;top:6px;height:1px;}
+  .scroll-y .track{top:0;bottom:0;left:6px;width:1px;}
+  .scroll .thumb{position:absolute;background:var(--accent);opacity:.55;border-radius:3px;cursor:grab;}
+  .scroll .thumb:hover{opacity:.9;}
+  .scroll .thumb.drag{cursor:grabbing;opacity:1;}
+  .scroll-x .thumb{top:3px;height:7px;}
+  .scroll-y .thumb{left:3px;width:7px;}
+  #sheet{transform-origin:0 0;will-change:transform;}
+
+  text{fill:var(--ink);pointer-events:none;}
+
+  .cell{font-family:'IBM Plex Mono',ui-monospace,Consolas,monospace;font-size:9.2px;
+        letter-spacing:.01em;opacity:.88;transition:opacity .18s ease,fill .18s ease;}
+  .cell.on{opacity:1;}
+  .cell .loss{fill:var(--red);opacity:.95;font-size:7px;letter-spacing:0;}
+
+  .name{font-size:14.5px;font-weight:600;letter-spacing:.045em;opacity:.98;}
+  .type{font-family:'IBM Plex Mono',monospace;font-size:9.2px;letter-spacing:.02em;opacity:.70;}
+  .doc{font-family:'EB Garamond',Palatino,Georgia,serif;font-style:italic;font-size:10.5px;opacity:.62;}
+  .barno{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.12em;fill:var(--red);opacity:.95;}
+
+  .pip{fill:var(--accent);}
+  .staff-label{pointer-events:auto;font-size:13px;font-weight:600;letter-spacing:.16em;opacity:.90;
+               transition:opacity .2s ease,fill .2s ease;}
+  .staff-label:hover{opacity:1;fill:var(--accent);cursor:pointer;}
+  .staff-sigil{pointer-events:auto;font-family:'IBM Plex Mono',monospace;font-size:16px;opacity:.42;}
+  .desc{pointer-events:auto;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.06em;opacity:.50;}
+  .stat-n{font-family:'Jost',sans-serif;font-size:48px;font-weight:600;letter-spacing:.01em;}
+  .stat-l{font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.18em;opacity:.60;}
+  .code{font-family:'IBM Plex Mono',monospace;font-size:9.4px;letter-spacing:.01em;opacity:.8;}
+  .pkg{font-family:'IBM Plex Mono',monospace;font-size:9.4px;opacity:.92;}
+  .pkg-what{font-family:'IBM Plex Mono',monospace;font-size:8.6px;letter-spacing:.02em;opacity:.5;}
+  .chip:hover .pill{opacity:.95;stroke:var(--accent);}
+  .caption{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.18em;opacity:.70;}
+
+  .frame{fill:none;stroke:var(--ink);stroke-width:1;opacity:.74;}
+  .frame-in{fill:none;stroke:var(--ink);stroke-width:.5;opacity:.28;}
+  .grat{stroke:var(--ink-faint);stroke-width:.5;opacity:.45;}
+  .rose-rim{fill:none;stroke:var(--brass);stroke-width:1.1;opacity:.9;}
+  .rose-rim2{fill:none;stroke:var(--ink);stroke-width:.5;opacity:.38;}
+  .rose-n{fill:var(--brass);stroke:var(--ink);stroke-width:.4;opacity:.94;}
+  .rose-d{fill:var(--ink);opacity:.4;}
+  .rose-c{fill:var(--brass);}
+  .rose-l{font-family:'Cinzel',serif;font-size:14px;fill:var(--ink);opacity:.85;letter-spacing:.08em;}
+  .wave{stroke:var(--route);stroke-width:.9;opacity:.6;fill:none;}
+  .ship{fill:var(--ink);opacity:.6;}
+  .sea-label{font-family:'Cinzel',serif;font-size:13px;letter-spacing:.3em;fill:var(--ink);opacity:.74;}
+  .rule{stroke:var(--ink);stroke-width:.7;opacity:.42;}
+  .station{stroke:var(--ink);stroke-width:.5;opacity:.30;}
+  .crop{stroke:var(--ink);stroke-width:.8;opacity:.45;}
+  .dash{fill:none;stroke:var(--ink);stroke-width:.8;opacity:.42;stroke-dasharray:4 4;}
+
+  .title{font-family:'Cinzel',Georgia,'Times New Roman',serif;font-size:94px;font-weight:700;letter-spacing:.14em;}
+  .thesis{font-family:'EB Garamond',Palatino,Georgia,serif;font-style:italic;font-size:24px;opacity:.94;}
+  .meta{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.11em;opacity:.66;}
+  .hint{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.11em;opacity:.62;}
+
+  .note{font-family:'IBM Plex Mono',monospace;font-size:9.5px;opacity:.72;transition:opacity .18s,fill .18s;}
+  .note-letter{font-family:'IBM Plex Mono',monospace;font-size:9.5px;fill:var(--red);opacity:.95;}
+  .note.on{opacity:1;fill:var(--ink);}
+
+  .quote{font-family:'EB Garamond',Palatino,Georgia,serif;font-style:italic;font-size:30px;opacity:.92;}
+  .quote-rule{stroke:var(--accent);stroke-width:2;opacity:.9;}
+  .proof{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.03em;
+         fill:var(--accent);opacity:0;transition:opacity .22s ease;}
+
+  .pill{fill:none;stroke:var(--ink);stroke-width:.9;opacity:.55;}
+  .pill-text{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;opacity:.80;}
+
+  .hit{fill:transparent;cursor:pointer;}
+  .hit:focus{outline:none;}
+  .colhi{fill:var(--accent);opacity:0;transition:opacity .2s ease;}
+  .station-hi{stroke:var(--accent);stroke-width:1.6;opacity:0;transition:opacity .2s ease;}
+  .bar.on .colhi{opacity:.09;}
+  .bar.on .station-hi{opacity:.95;}
+  .bar.on .name{fill:var(--accent);opacity:1;}
+  .bar.on .type{opacity:.95;fill:var(--accent);}
+  .bar.focus-ring .colhi{opacity:.12;}
+
+  svg.solo-json .cell:not(.s-json),
+  svg.solo-openapi .cell:not(.s-openapi),
+  svg.solo-sql .cell:not(.s-sql),
+  svg.solo-sdl .cell:not(.s-sdl){opacity:.07;}
+
+  .row{opacity:0;transform:translate(-18px,0);transition:opacity .5s ease,transform .65s cubic-bezier(.2,.7,.3,1);}
+  .row.shown{opacity:1;transform:none;}
+  html.static .row{opacity:1;transform:none;transition:none;}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="scroll scroll-x" id="sx"><div class="track"></div><div class="thumb" id="tx"></div></div>
+  <div class="scroll scroll-y" id="sy"><div class="track"></div><div class="thumb" id="ty"></div></div>
+  <svg id="sheet" xmlns="http://www.w3.org/2000/svg" aria-label="Moonmodel: one field description, four projections"></svg>
+</div>
+
+<script>
+window.__SHEET__ = {
+  "model": "User",
+  "doc": "somebody with an account",
+  "stat": { "fields": 10, "required": 7, "lost": 6 },
+  "fields": [
+    { "name": "id", "type": "Big", "doc": "assigned by the database", "required": true, "station_lost": null, "cells": {
+        "json": {"lines": ["\"type\": \"integer\",", "\"format\": \"int64\",", "\"description\": \"…\""], "spell": "integer int64", "lost": "a"},
+        "openapi": {"lines": ["\"type\": \"integer\",", "\"format\": \"int64\",", "\"description\": \"…\""], "spell": "integer int64", "lost": "a"},
+        "sql": {"lines": ["id BIGINT NOT NULL UNIQUE"], "spell": "BIGINT UNIQUE", "lost": null},
+        "sdl": {"lines": ["id: String!"], "spell": "String!", "lost": "b"} } },
+    { "name": "name", "type": "Text", "doc": "", "required": true, "station_lost": null, "cells": {
+        "json": {"lines": ["\"type\": \"string\",", "\"minLength\": 1,", "\"maxLength\": 64"], "spell": "string 1…64", "lost": null},
+        "openapi": {"lines": ["\"type\": \"string\",", "\"minLength\": 1,", "\"maxLength\": 64"], "spell": "string 1…64", "lost": null},
+        "sql": {"lines": ["name TEXT NOT NULL CHECK", "  (length(name) <= 64 AND", "  length(name) >= 1)"], "spell": "TEXT + CHECK", "lost": null},
+        "sdl": {"lines": ["name: String!"], "spell": "String!", "lost": null} } },
+    { "name": "email", "type": "Text?", "doc": "", "required": false, "station_lost": null, "cells": {
+        "json": {"lines": ["\"type\": [\"string\", \"null\"],", "\"format\": \"email\""], "spell": "string email|null", "lost": null},
+        "openapi": {"lines": ["\"type\": \"string\",", "\"format\": \"email\",", "\"nullable\": true"], "spell": "string email|null", "lost": null},
+        "sql": {"lines": ["email TEXT"], "spell": "TEXT", "lost": null},
+        "sdl": {"lines": ["email: String"], "spell": "String", "lost": null} } },
+    { "name": "age", "type": "Int?", "doc": "", "required": false, "station_lost": null, "cells": {
+        "json": {"lines": ["\"type\": [\"integer\", \"null\"],", "\"format\": \"int32\",", "\"minimum\": 0,", "\"maximum\": 150"], "spell": "integer int32 0…150|null", "lost": null},
+        "openapi": {"lines": ["\"type\": \"integer\",", "\"format\": \"int32\",", "\"minimum\": 0,", "\"maximum\": 150,", "\"nullable\": true"], "spell": "integer int32 0…150|null", "lost": null},
+        "sql": {"lines": ["age INTEGER CHECK (age >= 0 AND", "  age <= 150)"], "spell": "INTEGER + CHECK", "lost": null},
+        "sdl": {"lines": ["age: Int"], "spell": "Int", "lost": null} } },
+    { "name": "role", "type": "Text", "doc": "", "required": true, "station_lost": null, "cells": {
+        "json": {"lines": ["\"type\": \"string\",", "\"enum\": [\"Admin\", \"Member\",", "  \"Guest\"]"], "spell": "string enum 3", "lost": null},
+        "openapi": {"lines": ["\"type\": \"string\",", "\"enum\": [\"Admin\", \"Member\",", "  \"Guest\"]"], "spell": "string enum 3", "lost": null},
+        "sql": {"lines": ["role TEXT NOT NULL CHECK (role IN", "  ('Admin', 'Member', 'Guest'))"], "spell": "TEXT + CHECK", "lost": null},
+        "sdl": {"lines": ["role: String!"], "spell": "String!", "lost": "c"} } },
+    { "name": "weight", "type": "Real", "doc": "", "required": false, "station_lost": null, "cells": {
+        "json": {"lines": ["\"type\": \"number\",", "\"exclusiveMinimum\": 0,", "\"default\": 1"], "spell": "number >0 =1", "lost": null},
+        "openapi": {"lines": ["\"type\": \"number\",", "\"minimum\": 0,", "\"exclusiveMinimum\": true,", "\"default\": 1"], "spell": "number ≥0 open =1", "lost": null},
+        "sql": {"lines": ["weight DOUBLE PRECISION DEFAULT 1", "  CHECK (weight > 0)"], "spell": "DOUBLE PRECISION + CHECK", "lost": null},
+        "sdl": {"lines": ["weight: Float"], "spell": "Float", "lost": null} } },
+    { "name": "home", "type": "Ref", "doc": "", "required": true, "station_lost": null, "cells": {
+        "json": {"lines": ["\"$ref\": \"…/Address\""], "spell": "ref Address", "lost": null},
+        "openapi": {"lines": ["\"$ref\": \"…/Address\""], "spell": "ref Address", "lost": null},
+        "sql": {"lines": [], "spell": "—", "lost": "d"},
+        "sdl": {"lines": ["home: Address!"], "spell": "Address!", "lost": null} } },
+    { "name": "tags", "type": "List[Text]", "doc": "", "required": true, "station_lost": null, "cells": {
+        "json": {"lines": ["\"type\": \"array\",", "\"items\": { \"type\": \"string\" },", "\"maxItems\": 8,", "\"uniqueItems\": true"], "spell": "array", "lost": null},
+        "openapi": {"lines": ["\"type\": \"array\",", "\"items\": { \"type\": \"string\" },", "\"maxItems\": 8,", "\"uniqueItems\": true"], "spell": "array", "lost": null},
+        "sql": {"lines": ["tags TEXT[] NOT NULL CHECK", "  (length(tags) <= 8)"], "spell": "TEXT[] + CHECK", "lost": null},
+        "sdl": {"lines": ["tags: [String!]!"], "spell": "[String!]!", "lost": null} } },
+    { "name": "joined", "type": "Stamp", "doc": "", "required": true, "station_lost": null, "cells": {
+        "json": {"lines": ["\"type\": \"string\",", "\"format\": \"date-time\""], "spell": "string date-time", "lost": null},
+        "openapi": {"lines": ["\"type\": \"string\",", "\"format\": \"date-time\""], "spell": "string date-time", "lost": null},
+        "sql": {"lines": ["joined TIMESTAMPTZ NOT NULL"], "spell": "TIMESTAMPTZ", "lost": null},
+        "sdl": {"lines": ["joined: DateTime!"], "spell": "DateTime!", "lost": "e"} } },
+    { "name": "count", "type": "uint16-be-ref", "doc": "", "required": true, "station_lost": "f", "cells": {
+        "json": {"lines": ["\"type\": \"integer\",", "\"format\": \"uint16\""], "spell": "integer uint16", "lost": null},
+        "openapi": {"lines": ["\"type\": \"integer\",", "\"format\": \"uint16\""], "spell": "integer uint16", "lost": null},
+        "sql": {"lines": ["count SMALLINT NOT NULL"], "spell": "SMALLINT", "lost": null},
+        "sdl": {"lines": ["count: Int!"], "spell": "Int!", "lost": null} } }
+  ],
+  "notes": [
+    { "n": "a", "field": "id", "reading": "json", "why": "unique reaches SQL only: JSON Schema keeps that on the collection, not on the value." },
+    { "n": "b", "field": "id", "reading": "sdl", "why": "GraphQL's Int is 32 bits, so a 64-bit integer is carried as a String." },
+    { "n": "c", "field": "role", "reading": "sdl", "why": "a closed set of values has no GraphQL form here; the enum reaches JSON and SQL only." },
+    { "n": "d", "field": "home", "reading": "sql", "why": "a reference to Address is a foreign key, which needs that table's key" },
+    { "n": "e", "field": "joined", "reading": "sdl", "why": "GraphQL has no date; the document declares the DateTime scalar once." },
+    { "n": "f", "field": "count", "reading": "station", "why": "the width of a layout becomes a format word; its byte order and its reference mark reach no document at all." }
+  ]
+};
+</script>
+<script>
+// ---------------------------------------------------------------------------
+// One model, read four times. Nothing below knows any field: the sheet is
+// typeset from the JSON the library itself emits (cmd/sheet), so adding a field
+// to the model widens the rail and every count follows.
+// ---------------------------------------------------------------------------
+
+const SHEET = window.__SHEET__;
+const STATIC = location.search.includes('static');
+
+const W = 2480, FRAME = 40;
+const RAIL = 216, BAR_X = 232, BAR_RIGHT = 2372;
+const N = SHEET.fields.length;
+const BW = Math.floor((BAR_RIGHT - BAR_X) / N);
+const FS = BW >= 208 ? 9.2 : BW >= 192 ? 8.8 : BW >= 176 ? 8.4 : 8.0;
+const LH = Math.round(FS * 1.4 * 10) / 10;
+
+const SPINE = 396;
+const ROWS = [];
+{
+  let y = 452;
+  [
+    { key:'json',    label:'JSON',    sigil:'{ }',  desc:'object tree' },
+    { key:'openapi', label:'OPENAPI', sigil:'#/',   desc:'schema object' },
+    { key:'sql',     label:'SQL',     sigil:'( )',  desc:'columns' },
+    { key:'sdl',     label:'SDL',     sigil:'type', desc:'' },
+  ].forEach(row => {
+    const lines = Math.max(1, ...SHEET.fields.map(f => f.cells[row.key].lines.length));
+    const height = Math.max(48, lines * LH + 34);
+    ROWS.push({ ...row, top:y, bottom:y + height, mid:y + height / 2, height });
+    y += height + 22;
+  });
+}
+const MATRIX_BOTTOM = ROWS[ROWS.length - 1].bottom;
+
+const NOTES_TOP = MATRIX_BOTTOM + 56;
+const NOTES_H = 48 + SHEET.notes.length * 24;
+const NOTES_BOTTOM = NOTES_TOP + NOTES_H;
+const PROOF_Y = NOTES_BOTTOM + 48;
+const FOOT_RULE = PROOF_Y + 32;
+const FOOT_TEXT = FOOT_RULE + 30;
+const SEA_TOP = FOOT_TEXT + 44;
+const SEA_H = 128;
+const H = SEA_TOP + SEA_H + FRAME;
+
+const SVGNS = 'http://www.w3.org/2000/svg';
+const svg = document.getElementById('sheet');
+const el = (n, a = {}) => { const e = document.createElementNS(SVGNS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+const add = (parent, n, a) => { const e = el(n, a); parent.appendChild(e); return e; };
+const txt = (parent, x, y, str, cls) => {
+  const t = add(parent, 'text', { x, y, class: cls });
+  t.textContent = str;
+  return t;
+};
+const group = (id, cls) => { const g = el('g', { id, class: cls }); svg.appendChild(g); return g; };
+
+svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+svg.setAttribute('width', W);
+svg.setAttribute('height', H);
+
+// paper, grain, frame, crop marks -------------------------------------------
+const defs = add(svg, 'defs');
+const grain = add(defs, 'filter', { id:'grain', x:'0', y:'0', width:'100%', height:'100%' });
+add(grain, 'feTurbulence', { type:'fractalNoise', baseFrequency:'0.9', numOctaves:'3', stitchTiles:'stitch' });
+add(grain, 'feColorMatrix', { type:'saturate', values:'0' });
+
+add(svg, 'rect', { x:0, y:0, width:W, height:H, fill:'var(--paper)' });
+const grat = add(svg, 'g', { class:'grat' });
+for (let gx = FRAME + 120; gx < W - FRAME; gx += 240) add(grat, 'path', { d:`M${gx} ${FRAME} V${H-FRAME}` });
+for (let gy = FRAME + 110; gy < H - FRAME; gy += 200) add(grat, 'path', { d:`M${FRAME} ${gy} H${W-FRAME}` });
+const crops = add(svg, 'g', { class:'crop' });
+[[FRAME,FRAME,1,1],[W-FRAME,FRAME,-1,1],[FRAME,H-FRAME,1,-1],[W-FRAME,H-FRAME,-1,-1]]
+  .forEach(([x,y,sx,sy]) => add(crops, 'path', { d:`M${x} ${y+sy*28} V${y} H${x+sx*28}` }));
+add(svg, 'rect', { x:FRAME, y:FRAME, width:W-FRAME*2, height:H-FRAME*2, class:'frame' });
+add(svg, 'rect', { x:FRAME+10, y:FRAME+10, width:W-FRAME*2-20, height:H-FRAME*2-20, class:'frame-in' });
+
+(function compassRose(){
+  const g = add(svg, 'g');
+  const cx = W - FRAME - 122, cy = FRAME + 68, r = 42;
+  add(g, 'circle', { cx, cy, r, class:'rose-rim' });
+  add(g, 'circle', { cx, cy, r: r*0.66, class:'rose-rim2' });
+  [[0,1,1],[1,0,1],[0,-1,1],[-1,0,1],[0.707,0.707,0],[0.707,-0.707,0],[-0.707,-0.707,0],[-0.707,0.707,0]]
+    .forEach(([dx,dy,main]) => {
+      const R = main ? r : r*0.52;
+      const w = main ? r*0.16 : r*0.10;
+      const px = cx + dx*R, py = cy - dy*R;
+      const b1x = cx - dy*w, b1y = cy + dx*w;
+      const b2x = cx + dy*w, b2y = cy - dx*w;
+      add(g, 'path', { d:`M${cx} ${cy} L${b1x} ${b1y} L${px} ${py} L${b2x} ${b2y} Z`, class: main ? 'rose-n' : 'rose-d' });
+    });
+  add(g, 'circle', { cx, cy, r: r*0.07, class:'rose-c' });
+  const n = txt(g, cx, cy - r - 11, 'N', 'rose-l');
+  n.setAttribute('text-anchor', 'middle');
+})();
+
+// title ----------------------------------------------------------------------
+const gTitle = group('g-title', 'row');
+txt(gTitle, 72, 196, 'MOONMODEL', 'title');
+txt(gTitle, 74, 238, 'one field description; four projections', 'thesis');
+txt(gTitle, 74, 268, 'JSON SCHEMA · OPENAPI · SQL · GRAPHQL SDL', 'meta');
+
+// the counts, set the way a product page sets them ---------------------------
+const gStats = group('g-stats', 'row');
+const STATS = [
+  [SHEET.stat.fields, 'FIELDS'],
+  [4, 'READINGS'],
+  [SHEET.stat.required, 'REQUIRED'],
+  [SHEET.stat.lost, 'NOT CARRIED'],
+];
+const statX = [1004, 1258, 1512, 1798];
+STATS.forEach(([value, label], i) => {
+  add(gStats, 'path', { d:`M${statX[i]-26} 166 V222`, class:'rule' });
+  txt(gStats, statX[i], 200, String(value), 'stat-n');
+  txt(gStats, statX[i], 221, label, 'stat-l');
+});
+
+// stamp block ----------------------------------------------------------------
+const gStamp = group('g-stamp', 'row');
+const today = new Date().toISOString().slice(0, 10);
+[['SHEET 01 / 01', 150], ['SCALE 1:1', 170], [today, 190]].forEach(([label, y]) => {
+  const t = txt(gStamp, W-FRAME-24, y, label, 'meta');
+  t.setAttribute('text-anchor', 'end');
+});
+const edition = txt(gStamp, W-FRAME-24, 210, NIGHT_ON() ? 'EDITION 2 — NIGHT' : 'EDITION 1 — CHART', 'meta');
+edition.setAttribute('text-anchor', 'end');
+edition.style.pointerEvents = 'auto';
+edition.style.cursor = 'pointer';
+edition.id = 'edition';
+
+function NIGHT_ON(){ return document.documentElement.classList.contains('night'); }
+
+// head: rails, spine, stations ----------------------------------------------
+const gHead = group('g-head', 'row');
+
+ROWS.forEach((row, i) => {
+  add(gHead, 'path', { d:`M${FRAME} ${row.top} H${W-FRAME}`, class:'rule' });
+  add(gHead, 'path', { d:`M${FRAME} ${row.bottom} H${W-FRAME}`, class:'rule' });
+  const g = add(gHead, 'g', { 'data-staff': row.key });
+  add(g, 'circle', { cx:100, cy:row.top + 15, r:3.4, class:'pip' });
+  txt(g, 114, row.top + 19, row.label, 'staff-label');
+  txt(g, 114, row.top + 39, row.sigil, 'staff-sigil');
+  if (row.desc) txt(g, 114, row.top + 55, row.desc, 'desc');
+  g.style.pointerEvents = 'auto';
+});
+
+add(gHead, 'path', { d:`M${RAIL} ${SPINE - 56} V${MATRIX_BOTTOM}`, class:'rule' });
+add(gHead, 'path', { d:`M${BAR_X} ${SPINE} H${W-FRAME}`, class:'rule' });
+
+SHEET.fields.forEach((field, i) => {
+  const x = BAR_X + i * BW;
+  add(gHead, 'path', { d:`M${x} 320 V${MATRIX_BOTTOM}`, class:'station' });
+  txt(gHead, x + 10, 332, String(i + 1).padStart(2, '0'), 'barno');
+  txt(gHead, x + 10, SPINE - 14, field.name, 'name');
+  txt(gHead, x + 10, SPINE + 20, field.type, 'type');
+  if (field.doc) txt(gHead, x + 10, SPINE + 35, field.doc, 'doc');
+  if (field.station_lost){
+    const mark = txt(gHead, x + 12 + field.type.length * 5.6, SPINE + 20, '×' + field.station_lost, 'type');
+    mark.style.fill = 'var(--red)';
+  }
+});
+
+// the four readings ----------------------------------------------------------
+const ROW_GROUPS = {};
+ROWS.forEach(row => { ROW_GROUPS[row.key] = group('g-' + row.key, 'row'); });
+
+SHEET.fields.forEach((field, i) => {
+  const x = BAR_X + i * BW;
+  ROWS.forEach(row => {
+    const cell = field.cells[row.key];
+    const parent = ROW_GROUPS[row.key];
+    const top = row.top + 19;
+
+    if (cell.lines.length === 0){
+      add(parent, 'rect', {
+        x: x + 10, y: row.top + 8, width: BW - 24, height: row.height - 16, class:'dash',
+      });
+      const mark = txt(parent, x + 22, row.top + 27, '×' + (cell.lost || ''), 'cell');
+      mark.setAttribute('data-i', i);
+      mark.style.fill = 'var(--red)';
+      return;
+    }
+
+    const t = add(parent, 'text', { x: x + 10, y: top, class: `cell s-${row.key}` });
+    t.setAttribute('data-i', i);
+    t.style.fontSize = FS + 'px';
+    cell.lines.forEach((line, k) => {
+      const span = add(t, 'tspan', { x: x + 10, dy: k === 0 ? 0 : LH });
+      span.textContent = line;
+    });
+    if (cell.lost){
+      const widest = Math.max.apply(null, cell.lines.map(l => l.length));
+      const mx = Math.min(x + BW - 14, x + 10 + widest * FS * 0.6 + 5);
+      const m = add(t, 'tspan', { x: mx, y: top - 4, class:'loss' });
+      m.textContent = '×' + cell.lost;
+    }
+  });
+});
+
+// what a projection cannot carry: a dashed card, as a drawing marks a void ----
+const gNotes = group('g-notes', 'row');
+const noteText = SHEET.notes.map(n => `${n.field} — ${n.why}`);
+const cardW = Math.min(1560, 96 + Math.max(...noteText.map(t => t.length)) * 5.75);
+const cardX = FRAME + 24;
+add(gNotes, 'rect', { x: cardX, y: NOTES_TOP, width: cardW, height: NOTES_H, class:'dash' });
+txt(gNotes, cardX + 16, NOTES_TOP + 26, 'WHAT A PROJECTION CANNOT CARRY', 'caption');
+SHEET.notes.forEach((note, i) => {
+  const y = NOTES_TOP + 60 + i * 24;
+  const g = add(gNotes, 'g', { 'data-note': note.n, 'data-field': note.field });
+  txt(g, cardX + 16, y, note.n, 'note-letter');
+  txt(g, cardX + 40, y, noteText[i], 'note');
+});
+
+// quick start and the surface: a home page is also an entrance --------------
+const repo = 'https://github.com/moonbitstack/moonmodel';
+const cardB = cardX + cardW + 40;
+const cardBw = 520;
+const cardC = cardB + cardBw + 40;
+const cardCw = (W - FRAME - 24) - cardC;
+
+add(gNotes, 'rect', { x: cardB, y: NOTES_TOP, width: cardBw, height: NOTES_H, class:'dash' });
+txt(gNotes, cardB + 16, NOTES_TOP + 26, 'QUICK START', 'caption');
+[
+  'import { "moonbitstack/moonmodel" }',
+  '',
+  '#model.derive',
+  'pub struct User { id : Int64 }',
+  '',
+  '@json.of(User::describe())',
+].forEach((line, i) => txt(gNotes, cardB + 16, NOTES_TOP + 56 + i * 21, line, 'code'));
+
+add(gNotes, 'rect', { x: cardC, y: NOTES_TOP, width: cardCw, height: NOTES_H, class:'dash' });
+txt(gNotes, cardC + 16, NOTES_TOP + 26, 'THE SURFACE', 'caption');
+const packages = [
+  ['moonmodel', 'Model · Field · Check · Type'],
+  ['json', 'of · document'],
+  ['open', 'of · schemas'],
+  ['sql', 'of · table'],
+  ['sdl', 'of · document'],
+  ['verify', 'schema · valid · faults'],
+  ['cmd/derive', '#model annotations'],
+];
+packages.forEach(([name, what], i) => {
+  const col = i < 4 ? 0 : 1;
+  const row = i < 4 ? i : i - 4;
+  const x = cardC + 16 + col * 400;
+  const y = NOTES_TOP + 56 + row * 21;
+  txt(gNotes, x, y, name, 'pkg');
+  txt(gNotes, x + 100, y, what, 'pkg-what');
+});
+
+const links = [
+  ['API REFERENCE', 'api.html'],
+  ['GITHUB', repo],
+  ['EXAMPLES', repo + '/tree/master/src/examples'],
+  ['APACHE-2.0', repo + '/blob/master/LICENSE'],
+];
+let linkX = cardC + 16;
+links.forEach(([label, href]) => {
+  const w = label.length * 5.4 + 24;
+  const a = document.createElementNS(SVGNS, 'a');
+  a.setAttribute('href', href);
+  if (/^https?:/.test(href)){
+    a.setAttribute('target', '_blank');
+    a.setAttribute('rel', 'noreferrer');
+  }
+  const g = document.createElementNS(SVGNS, 'g');
+  g.setAttribute('class', 'chip');
+  add(g, 'rect', { x: linkX, y: NOTES_TOP + NOTES_H - 42, width: w, height: 24, rx: 12, class: 'pill' });
+  txt(g, linkX + 12, NOTES_TOP + NOTES_H - 26, label, 'pill-text');
+  a.appendChild(g);
+  gNotes.appendChild(a);
+  linkX += w + 10;
+});
+
+// footer ---------------------------------------------------------------------
+const gFoot = group('g-foot', 'row');
+add(gFoot, 'path', { d:`M${FRAME} ${FOOT_RULE} H${W-FRAME}`, class:'rule' });
+const proof = txt(gFoot, FRAME + 24, PROOF_Y, '', 'proof');
+proof.id = 'proof';
+const hint = txt(gFoot, FRAME + 24, FOOT_RULE - 12,
+  'DRAG TO PAN · SCROLL TO ZOOM · CLICK A BAR TO PIN ITS FOUR SPELLINGS · CLICK A STAFF TO READ IT ALONE · PRESS N FOR THE NIGHT CHART',
+  'hint');
+txt(gFoot, FRAME + 24, FOOT_TEXT,
+  'ONE SHEET, READ FOUR TIMES — THE SAME DESCRIPTION, AND NOT ONE SHAPE INVENTED FOR IT', 'meta');
+
+const installText = 'moon add moonbitstack/moonmodel';
+const pillW = installText.length * 5.4 + 26;
+add(gFoot, 'rect', {
+  x: W-FRAME-24-pillW, y: FOOT_TEXT-17, width: pillW, height: 26, rx: 13, class:'pill',
+});
+const pill = txt(gFoot, W-FRAME-24-pillW+13, FOOT_TEXT, installText, 'pill-text');
+pill.style.pointerEvents = 'auto';
+pill.style.cursor = 'copy';
+const pillRect = gFoot.lastChild.previousSibling;
+pillRect.style.pointerEvents = 'auto';
+pillRect.style.cursor = 'copy';
+function copyInstall(e){
+  e.stopPropagation();
+  const done = () => {
+    pill.textContent = 'COPIED';
+    setTimeout(() => { pill.textContent = installText; }, 1200);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(installText).then(done, done);
+  } else {
+    done();
+  }
+}
+pill.addEventListener('click', copyInstall);
+pillRect.addEventListener('click', copyInstall);
+
+// the sea under the chart: waves, a steamship, and the sheet's own sounding --
+const gSea = group('g-sea', 'row');
+add(gSea, 'path', { d:`M${FRAME} ${SEA_TOP} H${W-FRAME}`, class:'rule' });
+
+function wavePath(x0, x1, y, amp, len){
+  let d = `M${x0} ${y}`;
+  let x = x0;
+  while (x < x1){
+    const nx = Math.min(x1, x + len);
+    const half = (nx - x) / 2;
+    d += ` c ${half*0.5} ${-amp} ${half*1.3} ${-amp} ${half} 0`;
+    d += ` c ${half*0.7} ${amp} ${half*1.3} ${amp} ${half} 0`;
+    x = nx;
+  }
+  return d;
+}
+add(gSea, 'path', { d: wavePath(FRAME, W-FRAME, SEA_TOP + 32, 6, 44), class:'wave' });
+add(gSea, 'path', { d: wavePath(FRAME, W-FRAME, SEA_TOP + 64, 5, 52), class:'wave' });
+add(gSea, 'path', { d: wavePath(FRAME, W-FRAME, SEA_TOP + 96, 6, 44), class:'wave' });
+
+const ship = add(gSea, 'g', { transform:`translate(${W - FRAME - 330}, ${SEA_TOP + 16})` });
+add(ship, 'path', { d:'M0 30 Q44 10 92 30 L82 40 Q44 34 8 40 Z', class:'ship' });
+add(ship, 'path', { d:'M50 10 L58 10 L56 -2 L52 -2 Z', class:'ship' });
+add(ship, 'path', { d:'M22 12 L21 -2 L25 -2 L26 12 Z', class:'ship' });
+add(ship, 'path', { d:'M56 -8 q3 -7 0 -14 q3 -7 0 -14', class:'wave' });
+
+txt(gSea, FRAME + 24, SEA_TOP + 116, 'FOUR SOUNDINGS OF ONE DESCRIPTION', 'sea-label');
+
+// grain over everything ------------------------------------------------------
+add(svg, 'rect', { x:0, y:0, width:W, height:H, filter:'url(#grain)', opacity:'0.045',
+                   style:'pointer-events:none' });
+
+// hit areas ------------------------------------------------------------------
+const gHit = add(svg, 'g', { id:'g-hit' });
+const BARS = [];
+const HIT_TOP = 320, HIT_H = MATRIX_BOTTOM - HIT_TOP + 12;
+SHEET.fields.forEach((field, i) => {
+  const x = BAR_X + i * BW;
+  const g = add(gHit, 'g', { class:'bar', 'data-i': i });
+  add(g, 'rect', { x, y:HIT_TOP, width:BW, height:HIT_H, class:'colhi' });
+  add(g, 'path', { d:`M${x} ${HIT_TOP} V${MATRIX_BOTTOM}`, class:'station-hi' });
+  const hit = add(g, 'rect', { x, y:HIT_TOP-8, width:BW, height:HIT_H+8, class:'hit', tabindex:'0', role:'button' });
+  hit.setAttribute('aria-label', field.name + ' — ' + field.type);
+  BARS.push({ g, hit, field, i });
+});
+
+// interaction ----------------------------------------------------------------
+let active = -1, pinned = -1;
+
+function paint(){
+  const i = pinned >= 0 ? pinned : active;
+  document.querySelectorAll('.bar').forEach(b => b.classList.toggle('on', +b.dataset.i === i));
+  document.querySelectorAll('.cell').forEach(c => c.classList.toggle('on', +c.dataset.i === i));
+  const field = SHEET.fields[i];
+  document.querySelectorAll('[data-note]').forEach(n => {
+    n.classList.toggle('on', !!field && n.dataset.field === field.name);
+  });
+  if (field){
+    const rows = ROWS.map(r => `${r.label.toLowerCase()}: ${field.cells[r.key].spell}`);
+    proof.textContent = `${String(i+1).padStart(2,'0')}   ${field.name}   ›   ${rows.join('   ›   ')}`;
+    proof.style.opacity = 1;
+  } else {
+    proof.style.opacity = 0;
+  }
+}
+
+BARS.forEach(({ g, hit, i }) => {
+  hit.addEventListener('mouseenter', () => { active = i; paint(); });
+  hit.addEventListener('mouseleave', () => { if (active === i){ active = -1; paint(); } });
+  hit.addEventListener('focus', () => { active = i; g.classList.add('focus-ring'); paint(); });
+  hit.addEventListener('blur', () => { g.classList.remove('focus-ring'); if (active === i){ active = -1; paint(); } });
+  hit.addEventListener('click', e => { e.stopPropagation(); pinned = pinned === i ? -1 : i; paint(); });
+  hit.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); pinned = pinned === i ? -1 : i; paint(); }
+  });
+});
+
+document.querySelectorAll('[data-staff]').forEach(g => {
+  g.addEventListener('click', e => {
+    e.stopPropagation();
+    const k = g.dataset.staff;
+    const on = svg.classList.contains('solo-' + k);
+    svg.classList.remove('solo-json','solo-openapi','solo-sql','solo-sdl');
+    if (!on) svg.classList.add('solo-' + k);
+  });
+});
+
+function setNight(on){
+  document.documentElement.classList.toggle('night', on);
+  edition.textContent = on ? 'EDITION 2 — NIGHT' : 'EDITION 1 — CHART';
+}
+edition.addEventListener('click', e => { e.stopPropagation(); setNight(!NIGHT_ON()); });
+if (location.search.includes('night')) setNight(true);
+
+const stage = document.getElementById('stage');
+svg.addEventListener('click', () => { if (pinned >= 0){ pinned = -1; paint(); } });
+
+// camera ---------------------------------------------------------------------
+let s = 1, tx = 0, ty = 0, touched = false;
+
+const sx = document.getElementById('sx'), sy = document.getElementById('sy');
+const txEl = document.getElementById('tx'), tyEl = document.getElementById('ty');
+
+function syncBars(){
+  const r = stage.getBoundingClientRect();
+  const cw = W * s, ch = H * s;
+  const overX = cw > r.width + 1, overY = ch > r.height + 1;
+  sx.style.display = overX ? 'block' : 'none';
+  sy.style.display = overY ? 'block' : 'none';
+  if (overX){
+    const track = r.width - 14;
+    const w = Math.max(44, track * r.width / cw);
+    const span = track - w;
+    const pos = Math.min(1, Math.max(0, -tx / Math.max(1, cw - r.width)));
+    txEl.style.width = w + 'px';
+    txEl.style.left = (pos * span) + 'px';
+  }
+  if (overY){
+    const track = r.height - 14;
+    const h = Math.max(44, track * r.height / ch);
+    const span = track - h;
+    const pos = Math.min(1, Math.max(0, -ty / Math.max(1, ch - r.height)));
+    tyEl.style.height = h + 'px';
+    tyEl.style.top = (pos * span) + 'px';
+  }
+}
+
+const apply = () => {
+  svg.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+  syncBars();
+};
+
+function dragBar(axis){
+  const thumb = axis === 'x' ? txEl : tyEl;
+  thumb.addEventListener('pointerdown', e => {
+    e.stopPropagation(); e.preventDefault();
+    cancelIntro(); touched = true;
+    thumb.classList.add('drag');
+    const r = stage.getBoundingClientRect();
+    const start = axis === 'x' ? e.clientX : e.clientY;
+    const startT = axis === 'x' ? tx : ty;
+    const content = axis === 'x' ? W * s : H * s;
+    const view = axis === 'x' ? r.width : r.height;
+    const track = (axis === 'x' ? r.width : r.height) - 14;
+    const size = axis === 'x' ? txEl.offsetWidth : tyEl.offsetHeight;
+    const span = Math.max(1, track - size);
+    const max = Math.max(1, content - view);
+    const move = ev => {
+      const d = (axis === 'x' ? ev.clientX : ev.clientY) - start;
+      const value = startT - (d / span) * max;
+      if (axis === 'x'){
+        tx = Math.min(0, Math.max(view - content, value));
+      } else {
+        ty = Math.min(0, Math.max(view - content, value));
+      }
+      apply();
+    };
+    const up = () => {
+      thumb.classList.remove('drag');
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  });
+}
+dragBar('x');
+dragBar('y');
+
+function fit(){
+  const r = stage.getBoundingClientRect();
+  s = Math.min(r.width / W, r.height / H) * 0.965;
+  tx = (r.width - W * s) / 2;
+  ty = (r.height - H * s) / 2;
+  apply();
+}
+
+function focusOpen(){
+  const r = stage.getBoundingClientRect();
+  s = Math.min(1.02, Math.max(0.66, (r.width / W) * 1.9));
+  tx = r.width * 0.22 - 520 * s;
+  ty = r.height * 0.42 - 640 * s;
+  apply();
+}
+
+let timers = [];
+function cancelIntro(){ timers.forEach(clearTimeout); timers = []; svg.style.transition = 'none'; }
+
+function zoomAt(mx, my, k){
+  const ns = Math.min(3.2, Math.max(0.26, s * k));
+  tx = mx - (mx - tx) * (ns / s);
+  ty = my - (my - ty) * (ns / s);
+  s = ns;
+  apply();
+}
+
+let dragging = false, lastX = 0, lastY = 0;
+stage.addEventListener('pointerdown', e => {
+  cancelIntro(); touched = true;
+  dragging = true; lastX = e.clientX; lastY = e.clientY;
+  document.body.classList.add('dragging');
+  stage.setPointerCapture(e.pointerId);
+});
+stage.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  tx += e.clientX - lastX; ty += e.clientY - lastY;
+  lastX = e.clientX; lastY = e.clientY;
+  apply();
+});
+stage.addEventListener('pointerup', e => {
+  dragging = false; document.body.classList.remove('dragging');
+  try { stage.releasePointerCapture(e.pointerId); } catch (_) {}
+});
+stage.addEventListener('wheel', e => {
+  e.preventDefault(); cancelIntro(); touched = true;
+  const r = stage.getBoundingClientRect();
+  zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.0016));
+}, { passive:false });
+
+window.addEventListener('keydown', e => {
+  const r = stage.getBoundingClientRect();
+  if (e.key === '0'){ cancelIntro(); fit(); }
+  else if (e.key === '+' || e.key === '=') zoomAt(r.width/2, r.height/2, 1.15);
+  else if (e.key === '-') zoomAt(r.width/2, r.height/2, 1/1.15);
+  else if (e.key === 'n' || e.key === 'N') setNight(!NIGHT_ON());
+  else if (e.key === 'Escape'){ pinned = -1; active = -1; paint(); }
+});
+
+const CAM = location.search.match(/cam=([-\d.]+),([-\d.]+),([-\d.]+)/);
+if (location.search.includes('pin=')){
+  pinned = Math.max(0, Math.min(N - 1, parseInt(location.search.split('pin=')[1], 10) - 1));
+}
+window.addEventListener('resize', () => { if (!touched && !CAM) fit(); });
+
+// the sheet is laid down row by row, then the camera settles on the first bars
+(function plot(){
+  const rows = ['g-title','g-stamp','g-stats','g-head','g-json','g-openapi','g-sql','g-sdl','g-notes','g-foot','g-sea'];
+  rows.forEach(id => { const g = document.getElementById(id); if (g) g.classList.add('row'); });
+  if (STATIC){
+    rows.forEach(id => { const g = document.getElementById(id); if (g) g.classList.add('shown'); });
+    return;
+  }
+  rows.forEach((id, n) => timers.push(setTimeout(() => {
+    const g = document.getElementById(id); if (g) g.classList.add('shown');
+  }, 80 + n * 190)));
+  timers.push(setTimeout(() => {
+    svg.style.transition = 'transform 1.2s cubic-bezier(.22,.61,.36,1)';
+    focusOpen();
+  }, 2800));
+})();
+
+if (CAM){ s = +CAM[1]; tx = +CAM[2]; ty = +CAM[3]; apply(); }
+else fit();
+syncBars();
+paint();
+</script>
+</body>
+</html>
