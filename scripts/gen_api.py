@@ -349,6 +349,8 @@ def build():
   <div class="meta">
     <span>SHEET 02 / 01 · THE SURFACE</span>
     <span><a href="index.html">← the front sheet</a></span>
+    <span><a href="guide.html">guide</a></span>
+    <span><a href="showcase.html">showcase</a></span>
     <span><a href="https://github.com/moonbitstack/moonmodel">github</a></span>
   </div>
   <nav>{nav}</nav>

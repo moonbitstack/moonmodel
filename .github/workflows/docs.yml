@@ -43,13 +43,14 @@ jobs:
           moon version --all
           moon update
 
-      # The front sheet and the reference are build products. Regenerate them
-      # from the interfaces and the model, and refuse a deploy that would
-      # publish a page the source no longer agrees with.
-      - name: the sheet and the reference are up to date
+      # The front sheet, the reference and the showcase are build products.
+      # Regenerate them from the interfaces, the model and the tour, and refuse
+      # a deploy that would publish a page the source no longer agrees with.
+      - name: the sheet, the reference and the showcase are up to date
         run: |
           python3 scripts/gen_sheet.py
           python3 scripts/gen_api.py
+          python3 scripts/gen_showcase.py
           git diff --exit-code docs/
 
       - uses: actions/configure-pages@v6

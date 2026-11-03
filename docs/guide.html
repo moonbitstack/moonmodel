@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOONMODEL — guide</title>
+<link rel="stylesheet" href="assets/type.css">
+<link rel="stylesheet" href="assets/tokens.css">
+<style>
+  html,body{margin:0;background:var(--desk);color:var(--ink);}
+  body{font-family:'Jost',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1180px;margin:0 auto;padding:56px 40px 120px;}
+  .sheet{background:var(--paper);border:1px solid var(--ink);outline:1px solid var(--ink);
+         outline-offset:8px;padding:56px 64px;position:relative;box-shadow:0 24px 60px -30px rgba(0,0,0,.55);}
+  .sheet::after{content:"";position:absolute;inset:14px;border:1px solid var(--ink);opacity:.25;pointer-events:none;}
+  h1{font-family:'Cinzel',serif;font-weight:700;letter-spacing:.16em;font-size:40px;margin:0;}
+  .sub{font-family:'EB Garamond',serif;font-style:italic;font-size:20px;opacity:.85;margin:.3em 0 0;}
+  .meta{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;opacity:.6;
+         display:flex;gap:22px;margin-top:22px;flex-wrap:wrap;}
+  .meta a{color:inherit;}
+  nav{margin:26px 0 8px;display:flex;gap:9px;flex-wrap:wrap;}
+  nav a{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.05em;text-decoration:none;
+        color:var(--ink);border:1px solid var(--ink);border-radius:14px;padding:5px 12px;opacity:.8;}
+  nav a:hover{background:var(--accent);color:var(--paper);border-color:var(--accent);}
+  .sec{margin-top:46px;border-top:1px solid var(--ink);padding-top:22px;}
+  .sec h2{font-family:'Cinzel',serif;font-size:20px;letter-spacing:.05em;margin:0 0 .2em;}
+  .sec .lead{font-size:14.5px;line-height:1.65;opacity:.9;margin:0 0 12px;max-width:76ch;}
+  p{font-size:14px;line-height:1.65;opacity:.9;max-width:76ch;}
+  code{font-family:'IBM Plex Mono',monospace;font-size:.92em;background:rgba(0,0,0,.06);
+       padding:.06em .32em;border-radius:3px;}
+  .code{position:relative;background:var(--paper-hi);border:1px solid var(--ink);margin:12px 0 4px;}
+  .code pre{margin:0;padding:16px 18px;overflow:auto;max-height:460px;
+            font-family:'IBM Plex Mono',monospace;font-size:11.8px;line-height:1.6;}
+  .copy{position:absolute;top:8px;right:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;
+        letter-spacing:.12em;padding:5px 10px;border:1px solid var(--ink);background:var(--paper);
+        color:var(--ink);cursor:pointer;opacity:.7;}
+  .copy:hover,.copy.done{opacity:1;background:var(--accent);color:var(--paper);border-color:var(--accent);}
+  table{width:100%;border-collapse:collapse;margin:14px 0 6px;font-size:13px;}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--ink);vertical-align:top;}
+  th{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;opacity:.6;}
+  td:first-child{font-family:'IBM Plex Mono',monospace;font-size:12px;white-space:nowrap;}
+  .muted{opacity:.7;}
+  .foot{margin-top:56px;padding-top:18px;border-top:1px solid var(--ink);
+        font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;opacity:.6;
+        display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  a{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="sheet">
+  <h1>MOONMODEL</h1>
+  <p class="sub">Guide — describe a field once; read it four ways</p>
+  <div class="meta">
+    <span>GUIDE · THE READING</span>
+    <span><a href="index.html">← the front sheet</a></span>
+    <span><a href="api.html">API reference</a></span>
+    <span><a href="showcase.html">showcase</a></span>
+    <span><a href="https://github.com/moonbitstack/moonmodel">github</a></span>
+  </div>
+  <nav>
+    <a href="#install">install</a>
+    <a href="#describe">describe once</a>
+    <a href="#annotations">annotations</a>
+    <a href="#projections">four projections</a>
+    <a href="#verify">checking</a>
+    <a href="#limits">what cannot carry</a>
+    <a href="#next">next</a>
+  </nav>
+
+  <section class="sec" id="install">
+    <h2>Install</h2>
+    <p class="lead">One command adds the description and its projections. A program that wants OpenAPI does not link the SQL writer — the packages are separate on purpose.</p>
+    <div class="code"><button class="copy" type="button">COPY</button><pre>moon add moonbitstack/moonmodel</pre></div>
+    <p>In <code>moon.pkg</code>, import the root package and only the projections you need:</p>
+    <div class="code"><button class="copy" type="button">COPY</button><pre>import {
+  "moonbitstack/moonmodel",
+  "moonbitstack/moonmodel/json",
+}</pre></div>
+    <p class="muted">The <code>#model</code> annotations are read at build time by <code>cmd/derive</code>. If you use them, add the rule to <code>moon.mod</code> and a <code>dev_build</code> to the package, or write the model with <code>Model::new</code> at run time instead.</p>
+  </section>
+
+  <section class="sec" id="describe">
+    <h2>Describe once</h2>
+    <p class="lead">A struct carries its own description. Nothing is written twice: the JSON Schema, the OpenAPI object, the <code>CREATE TABLE</code> and the GraphQL type all come from the same value.</p>
+    <div class="code"><button class="copy" type="button">COPY</button><pre>#model.derive(doc="somebody with an account")
+pub struct User {
+  #model.field(unique=true)
+  id : Int64
+  #model.field(longest="64")
+  name : String
+  age : Int32?
+  home : Address
+}
+
+#model.derive
+pub struct Address {
+  city : String
+}</pre></div>
+  </section>
+
+  <section class="sec" id="annotations">
+    <h2>Annotations</h2>
+    <p class="lead">A field with no annotation is named after itself and required. <code>T?</code> may be left out and may be null. <code>Array[T]</code> is a list, <code>Map[String, T]</code> a dictionary, an annotated struct a reference.</p>
+    <table>
+      <tr><th>Annotation</th><th>Goes on</th><th>Means</th></tr>
+      <tr><td>#model.derive</td><td>a struct</td><td>generate <code>T::describe()</code>; <code>name=</code> and <code>doc=</code> set the model's name and text</td></tr>
+      <tr><td>#model.derive</td><td>an enum</td><td>a field of this type is text limited to its constructors</td></tr>
+      <tr><td>#model.field</td><td>a field</td><td>everything below</td></tr>
+      <tr><td>#model.skip</td><td>a field</td><td>leave it out</td></tr>
+    </table>
+    <table>
+      <tr><th>#model.field key</th><th>Means</th></tr>
+      <tr><td>name, doc</td><td>the field's name in the model, and its text</td></tr>
+      <tr><td>kind</td><td>the type when the field's own says nothing: <code>bool</code> <code>int</code> <code>big</code> <code>real</code> <code>text</code> <code>bytes</code> <code>stamp</code> <code>any</code>, or a width — <code>int16</code> <code>uint64</code> <code>float32</code></td></tr>
+      <tr><td>model</td><td>the type is the model of this name</td></tr>
+      <tr><td>required, nullable</td><td>override what the type says — two separate questions</td></tr>
+      <tr><td>default</td><td>a default, read by the field's type</td></tr>
+      <tr><td>least, most, over, under, step</td><td>numeric bounds, as strings</td></tr>
+      <tr><td>shortest, longest</td><td>the length of text or a list</td></tr>
+      <tr><td>pattern, format</td><td>a text field's shape</td></tr>
+      <tr><td>option</td><td>one allowed value, repeated</td></tr>
+      <tr><td>distinct, unique</td><td>a list's items differ; no two records share the value</td></tr>
+    </table>
+  </section>
+
+  <section class="sec" id="projections">
+    <h2>Four projections</h2>
+    <p class="lead">Every projection takes the same value. A projection that cannot carry a field says so — it never invents a shape for it or fails.</p>
+    <div class="code"><button class="copy" type="button">COPY</button><pre>// JSON Schema 2020-12
+println(@json.of(User::describe()).stringify(indent=2))
+
+// an OpenAPI Schema Object, three dialects
+println(@open.of(User::describe(), dialect=@open.OpenApi30).stringify(indent=2))
+
+// columns and CREATE TABLE, three dialects
+println(@sql.table(User::describe(), dialect=@sql.Postgres))
+
+// GraphQL SDL
+let (sdl, skipped) = @sdl.of(User::describe())</pre></div>
+    <p class="muted">See the <a href="showcase.html">showcase</a> for the complete output of a model that uses every type and every check.</p>
+  </section>
+
+  <section class="sec" id="verify">
+    <h2>Checking an instance</h2>
+    <p class="lead">The description is what an instance is checked against, written out as JSON Schema and read by a validator that knows the specification — so the schema a reader sees and the schema a request is held to are the same one.</p>
+    <div class="code"><button class="copy" type="button">COPY</button><pre>fn conforms(user : Json) -> Bool {
+  let checker = @verify.schema(User::describe(), known=[Address::describe()]) catch {
+    _ => return false
+  }
+  checker.valid(user)
+}</pre></div>
+    <table>
+      <tr><th>Call</th><th>Answers</th></tr>
+      <tr><td>schema(model, known=…)</td><td>the model as a Schema, with every model it refers to</td></tr>
+      <tr><td>valid(model, instance, known=…)</td><td>whether the instance conforms</td></tr>
+      <tr><td>faults(model, instance, known=…)</td><td>every reason it does not, each with <code>at</code> and the keyword that refused it</td></tr>
+    </table>
+  </section>
+
+  <section class="sec" id="limits">
+    <h2>What each projection cannot carry</h2>
+    <p class="lead">Folding the losses into one number would hide which shape a reader gets. Each projection reports what it dropped, and the reason.</p>
+    <table>
+      <tr><th>Projection</th><th>Cannot carry</th></tr>
+      <tr><td>JSON Schema</td><td><code>unique</code>, which is about the collection; a layout's byte order and reference mark</td></tr>
+      <tr><td>OpenAPI 2.0</td><td>nullable has no keyword — written as <code>x-nullable</code>; an open bound is a boolean beside the closed one</td></tr>
+      <tr><td>SQL</td><td><code>Dict</code>, <code>Nest</code> and <code>Ref</code> need their own table; <code>List</code> is a column only in Postgres; <code>Any</code> and <code>Raw</code> have no type</td></tr>
+      <tr><td>GraphQL</td><td><code>Dict</code>, <code>Nest</code>, <code>Any</code>, <code>Raw</code> have no type; no bound reaches the schema; a 64-bit number becomes a <code>String</code></td></tr>
+    </table>
+  </section>
+
+  <section class="sec" id="next">
+    <h2>Where next</h2>
+    <p class="lead">The front sheet reads one model four times; the reference lists every type and function; the showcase prints complete documents.</p>
+    <p>
+      <a href="index.html">the front sheet</a> ·
+      <a href="api.html">API reference</a> ·
+      <a href="showcase.html">showcase</a> ·
+      <a href="https://github.com/moonbitstack/moonmodel">github</a>
+    </p>
+  </section>
+
+  <div class="foot">
+    <span>APACHE-2.0 · MOONBITSTACK/MOONMODEL</span>
+    <span>moon add moonbitstack/moonmodel</span>
+  </div>
+</div></div>
+<script>
+  document.querySelectorAll('.copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pre = btn.parentElement.querySelector('pre');
+      const text = pre ? pre.textContent : '';
+      const done = () => {
+        btn.textContent = 'COPIED';
+        btn.classList.add('done');
+        setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('done'); }, 1200);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+      } else { done(); }
+    });
+  });
+</script>
+</body>
+</html>
