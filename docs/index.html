@@ -71,6 +71,8 @@
   .wave{stroke:var(--route);stroke-width:.9;opacity:.6;fill:none;}
   .ship{fill:var(--ink);opacity:.6;}
   .sea-label{font-family:'Cinzel',serif;font-size:13px;letter-spacing:.3em;fill:var(--ink);opacity:.74;}
+  .sounding{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.05em;
+            fill:var(--ink-faint);opacity:.6;}
   .rule{stroke:var(--ink);stroke-width:.7;opacity:.42;}
   .station{stroke:var(--ink);stroke-width:.5;opacity:.30;}
   .crop{stroke:var(--ink);stroke-width:.8;opacity:.45;}
@@ -498,9 +500,15 @@ function copyInstall(e){
 pill.addEventListener('click', copyInstall);
 pillRect.addEventListener('click', copyInstall);
 
-// the sea under the chart: waves, a steamship, and the sheet's own sounding --
+// the sea under the chart: a horizon, soundings, waves, a ship, and the sheet's own voice
 const gSea = group('g-sea', 'row');
 add(gSea, 'path', { d:`M${FRAME} ${SEA_TOP} H${W-FRAME}`, class:'rule' });
+add(gSea, 'path', { d:`M${FRAME} ${SEA_TOP + 6} H${W-FRAME}`, class:'rule' });
+
+// a few of the numbers a chart writes beside the water
+[['12', 0.10], ['40', 0.30], ['18', 0.50], ['7', 0.70]].forEach(([n, f]) => {
+  txt(gSea, FRAME + (W - FRAME * 2) * f, SEA_TOP + 34, n, 'sounding');
+});
 
 function wavePath(x0, x1, y, amp, len){
   let d = `M${x0} ${y}`;
@@ -514,21 +522,33 @@ function wavePath(x0, x1, y, amp, len){
   }
   return d;
 }
-add(gSea, 'path', { d: wavePath(FRAME, W-FRAME, SEA_TOP + 32, 6, 44), class:'wave' });
-add(gSea, 'path', { d: wavePath(FRAME, W-FRAME, SEA_TOP + 64, 5, 52), class:'wave' });
-add(gSea, 'path', { d: wavePath(FRAME, W-FRAME, SEA_TOP + 96, 6, 44), class:'wave' });
+add(gSea, 'path', { d: wavePath(FRAME, W-FRAME, SEA_TOP + 44, 7, 46), class:'wave' });
+add(gSea, 'path', { d: wavePath(FRAME, W-FRAME, SEA_TOP + 70, 5, 56), class:'wave' });
+add(gSea, 'path', { d: wavePath(FRAME, W-FRAME, SEA_TOP + 96, 6, 48), class:'wave' });
 
-const ship = add(gSea, 'g', { transform:`translate(${W - FRAME - 330}, ${SEA_TOP + 16})` });
+// the steamship, a little larger now, and a boat off to the west
+const ship = add(gSea, 'g', { transform:`translate(${W - FRAME - 372}, ${SEA_TOP + 26}) scale(1.3)` });
 add(ship, 'path', { d:'M0 30 Q44 10 92 30 L82 40 Q44 34 8 40 Z', class:'ship' });
 add(ship, 'path', { d:'M50 10 L58 10 L56 -2 L52 -2 Z', class:'ship' });
 add(ship, 'path', { d:'M22 12 L21 -2 L25 -2 L26 12 Z', class:'ship' });
 add(ship, 'path', { d:'M56 -8 q3 -7 0 -14 q3 -7 0 -14', class:'wave' });
+
+const boat = add(gSea, 'g', { transform:`translate(${W * 0.60}, ${SEA_TOP + 74}) scale(0.66)` });
+add(boat, 'path', { d:'M0 20 Q34 4 70 20 L60 27 Q34 23 6 27 Z', class:'ship' });
+add(boat, 'path', { d:'M34 4 L34 -14', class:'wave' });
+add(boat, 'path', { d:'M34 -14 L52 -6 L34 0 Z', class:'ship' });
 
 txt(gSea, FRAME + 24, SEA_TOP + 116, 'FOUR SOUNDINGS OF ONE DESCRIPTION', 'sea-label');
 
 // grain over everything ------------------------------------------------------
 add(svg, 'rect', { x:0, y:0, width:W, height:H, filter:'url(#grain)', opacity:'0.045',
                    style:'pointer-events:none' });
+
+// the sheet is lit: a faint vignette so the edges read as an aged page
+const vig = add(defs, 'radialGradient', { id:'vig', cx:'50%', cy:'46%', r:'72%' });
+add(vig, 'stop', { offset:'64%', 'stop-color':'#000', 'stop-opacity':'0' });
+add(vig, 'stop', { offset:'100%', 'stop-color':'#000', 'stop-opacity':'0.13' });
+add(svg, 'rect', { x:0, y:0, width:W, height:H, fill:'url(#vig)', style:'pointer-events:none' });
 
 // hit areas ------------------------------------------------------------------
 const gHit = add(svg, 'g', { id:'g-hit' });
