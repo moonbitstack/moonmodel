@@ -509,32 +509,48 @@ const links = [
   ['API REFERENCE', 'api.html'],
   ['GITHUB', repo],
 ];
-const LINK_GAP = 10;
-const pillWidth = label => label.length * 5.4 + 24;
-const linksW = links.reduce((n, [label]) => n + pillWidth(label), 0) + LINK_GAP * (links.length - 1);
-let linkX = cardC + (cardCw - linksW) / 2;          // centred, not left-hugging
+const CHIP_GAP = 10, CHIP_PAD = 13;
 // centre vertically in the strip between the package list and the card's edge
 const pkgRows = Math.ceil(packages.length / 2);
 const listBottomY = NOTES_TOP + 56 + (pkgRows - 1) * 21 + 6;
 const stripTop = listBottomY + 10;
 const stripBottom = NOTES_TOP + NOTES_H - 12;
 const linkY = Math.round(stripTop + Math.max(0, (stripBottom - stripTop - 24) / 2));
-links.forEach(([label, href]) => {
-  const w = pillWidth(label);
-  const a = document.createElementNS(SVGNS, 'a');
-  a.setAttribute('href', href);
-  if (/^https?:/.test(href)){
-    a.setAttribute('target', '_blank');
-    a.setAttribute('rel', 'noreferrer');
-  }
-  const g = document.createElementNS(SVGNS, 'g');
-  g.setAttribute('class', 'chip');
-  add(g, 'rect', { x: linkX, y: linkY, width: w, height: 24, rx: 12, class: 'pill' });
-  txt(g, linkX + 12, linkY + 16, label, 'pill-text');
-  a.appendChild(g);
-  gNotes.appendChild(a);
-  linkX += w + LINK_GAP;
-});
+
+function drawChips(){
+  [...gNotes.querySelectorAll('a.chip-link')].forEach(a => a.remove());
+  // Measure the labels instead of guessing a width: the mono face plus its
+  // letter-spacing is wider than a character count suggests, and that guess
+  // is what pushed the text into the rounded caps.
+  const probe = add(gNotes, 'text', { x: 0, y: -9999, class: 'pill-text' });
+  const widths = links.map(([label]) => {
+    probe.textContent = label;
+    return probe.getComputedTextLength ? probe.getComputedTextLength() : label.length * 6.2;
+  });
+  probe.remove();
+  const w = widths.map(tw => Math.round(tw) + CHIP_PAD * 2);
+  const total = w.reduce((a, b) => a + b, 0) + CHIP_GAP * (links.length - 1);
+  let x = cardC + (cardCw - total) / 2;
+  links.forEach(([label, href], i) => {
+    const a = document.createElementNS(SVGNS, 'a');
+    a.setAttribute('href', href);
+    a.setAttribute('class', 'chip-link');
+    if (/^https?:/.test(href)){
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noreferrer');
+    }
+    const g = document.createElementNS(SVGNS, 'g');
+    g.setAttribute('class', 'chip');
+    add(g, 'rect', { x, y: linkY, width: w[i], height: 24, rx: 12, class: 'pill' });
+    const t = txt(g, x + w[i] / 2, linkY + 15.5, label, 'pill-text');
+    t.setAttribute('text-anchor', 'middle');     // centred, not left-padded
+    a.appendChild(g);
+    gNotes.appendChild(a);
+    x += w[i] + CHIP_GAP;
+  });
+}
+drawChips();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawChips);
 
 // footer ---------------------------------------------------------------------
 const gFoot = group('g-foot', 'row');
