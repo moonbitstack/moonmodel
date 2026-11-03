@@ -312,7 +312,6 @@ def build():
   .headrow nav{{flex:1 1 auto;min-width:0;margin:0;}}
   .bar{{display:flex;gap:10px;margin:0;align-items:stretch;flex:0 0 auto;}}
   .bar #filter{{width:260px;flex:0 0 auto;font-family:'IBM Plex Mono',monospace;font-size:12.5px;letter-spacing:.02em;}}
-  .bar #night{{flex:0 0 auto;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;}}
   .pkg{{margin-top:44px;border-top:1px solid var(--ink);padding-top:26px;}}
   .pkg-head h2{{font-family:'IBM Plex Mono',monospace;font-size:15px;letter-spacing:.04em;
                 margin:0;color:var(--accent);}}
@@ -365,7 +364,6 @@ def build():
     <div class="bar">
       <input id="filter" type="text" autocomplete="off"
              placeholder="filter types, values, methods…">
-      <button id="night" type="button">EDITION 1 — CHART</button>
     </div>
   </div>
   </header>
@@ -391,14 +389,6 @@ def build():
       p.style.display = any ? '' : 'none';
     }});
   }});
-  const nightBtn = document.getElementById('night');
-  function setNight(on) {{
-    document.documentElement.classList.toggle('night', on);
-    nightBtn.textContent = on ? 'EDITION 2 — NIGHT' : 'EDITION 1 — CHART';
-  }}
-  nightBtn.addEventListener('click', () =>
-    setNight(!document.documentElement.classList.contains('night')));
-  if (location.search.includes('night')) setNight(true);
 </script>
 <script src="assets/ui.js" defer></script>
 </body>

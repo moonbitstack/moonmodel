@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="night">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -41,6 +41,7 @@
 </style>
 </head>
 <body>
+<button id="theme" class="themebtn" type="button"></button>
 <div id="stage">
   <svg viewBox="0 0 2480 1240" width="2480" height="1240" xmlns="http://www.w3.org/2000/svg"
        aria-label="404: this address is a reference the document does not carry">
@@ -95,11 +96,12 @@
     </a>
 
     <text class="meta" x="2416" y="1068" text-anchor="end">moon add moonbitstack/moonmodel</text>
-    <text class="meta" x="64" y="1128">SHEET 00 / 00 · SCALE 1:1 · EDITION 2 — NIGHT</text>
+    <text id="hole-edition" class="meta" x="64" y="1128">SHEET 00 / 00 · SCALE 1:1 · EDITION 1 — CHART</text>
 
     <rect x="0" y="0" width="2480" height="1240" filter="url(#grain)" opacity="0.045"
           style="pointer-events:none"/>
   </svg>
 </div>
+<script src="assets/ui.js" defer></script>
 </body>
 </html>
