@@ -3,10 +3,11 @@
 
 ///|
 /// A field GraphQL has no type for, and why.
+#derive(Eq, Debug)
 pub(all) struct Skipped {
   field : String
   why : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Skipped with Eq::{equal, not_equal}

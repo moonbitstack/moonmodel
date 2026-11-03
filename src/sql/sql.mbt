@@ -5,11 +5,12 @@
 /// Which SQL is being written. The three disagree about nearly every type
 /// name, so the dialect is a parameter rather than a default anyone could
 /// guess at.
+#derive(Eq, Debug)
 pub(all) enum Dialect {
   Sqlite
   Postgres
   Mysql
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Dialect with Eq::{equal, not_equal}
@@ -22,10 +23,11 @@ pub extend Dialect with Debug::{to_repr}
 ///
 /// Reported rather than dropped: a table silently missing a field is a bug
 /// that shows up as missing data much later.
+#derive(Eq, Debug)
 pub(all) struct Skipped {
   field : String
   why : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Skipped with Eq::{equal, not_equal}
@@ -35,6 +37,7 @@ pub extend Skipped with Debug::{to_repr}
 
 ///|
 /// One column.
+#derive(Eq, Debug)
 pub(all) struct Column {
   name : String
   /// The type as this dialect spells it.
@@ -49,7 +52,7 @@ pub(all) struct Column {
   /// The CHECK clause the bounds amount to, or empty when they amount to
   /// nothing.
   check : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Column with Eq::{equal, not_equal}

@@ -3,6 +3,7 @@
 
 ///|
 /// Which OpenAPI a document is written for.
+#derive(Eq, Debug)
 pub(all) enum Dialect {
   /// Swagger 2.0, whose Schema Object is a draft-4 subset.
   Swagger20
@@ -10,7 +11,7 @@ pub(all) enum Dialect {
   OpenApi30
   /// OpenAPI 3.1.0, which is JSON Schema 2020-12 exactly.
   OpenApi31
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Dialect with Eq::{equal, not_equal}

@@ -3,6 +3,7 @@ package "moonbitstack/moonmodel"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -11,6 +12,7 @@ pub let check : Check
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct Check {
   least : Double?
   most : Double?
@@ -21,48 +23,51 @@ pub(all) struct Check {
   longest : Int32?
   pattern : String?
   format : String?
-  options : Array[Json]
+  options : Array[@json.Json]
   distinct : Bool
   unique : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn Check::equal(Self, Self) -> Bool
 pub fn Check::is_empty(Self) -> Bool
-pub fn Check::new(least? : Double, most? : Double, over? : Double, under? : Double, step? : Double, shortest? : Int32, longest? : Int32, pattern? : String, format? : String, options? : Array[Json], distinct? : Bool, unique? : Bool) -> Self
+pub fn Check::new(least? : Double, most? : Double, over? : Double, under? : Double, step? : Double, shortest? : Int32, longest? : Int32, pattern? : String, format? : String, options? : Array[@json.Json], distinct? : Bool, unique? : Bool) -> Self
 pub fn Check::not_equal(Self, Self) -> Bool
 pub fn Check::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Field {
   name : String
   kind : Type
   required : Bool
   nullable : Bool
   doc : String
-  default : Json?
+  default : @json.Json?
   check : Check
-} derive(Eq, @debug.Debug)
+}
 pub fn Field::equal(Self, Self) -> Bool
-pub fn Field::new(String, Type, required? : Bool, nullable? : Bool, doc? : String, default? : Json, check? : Check) -> Self
+pub fn Field::new(String, Type, required? : Bool, nullable? : Bool, doc? : String, default? : @json.Json, check? : Check) -> Self
 pub fn Field::not_equal(Self, Self) -> Bool
 pub fn Field::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Layout {
   kind : Type
   bits : Int32?
   unsigned : Bool
   order : Order
   reference : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn Layout::equal(Self, Self) -> Bool
 pub fn Layout::format(Self) -> String?
 pub fn Layout::new(Type, bits? : Int32, unsigned? : Bool, order? : Order, reference? : Bool) -> Self
 pub fn Layout::not_equal(Self, Self) -> Bool
 pub fn Layout::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Model {
   name : String
   doc : String
   fields : Array[Field]
-} derive(Eq, @debug.Debug)
+}
 pub fn Model::equal(Self, Self) -> Bool
 pub fn Model::field(Self, String) -> Field?
 pub fn Model::mentions(Self) -> Array[String]
@@ -71,14 +76,16 @@ pub fn Model::not_equal(Self, Self) -> Bool
 pub fn Model::required(Self) -> Array[String]
 pub fn Model::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Order {
   Little
   Big
-} derive(Eq, @debug.Debug)
+}
 pub fn Order::equal(Self, Self) -> Bool
 pub fn Order::not_equal(Self, Self) -> Bool
 pub fn Order::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Type {
   Bool
   Int
@@ -93,8 +100,8 @@ pub(all) enum Type {
   Nest(Model)
   Wire(Layout)
   Any
-  Raw(Json)
-} derive(Eq, @debug.Debug)
+  Raw(@json.Json)
+}
 pub fn Type::equal(Self, Self) -> Bool
 pub fn Type::not_equal(Self, Self) -> Bool
 pub fn Type::of_word(String) -> Self?

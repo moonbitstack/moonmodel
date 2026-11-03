@@ -3,11 +3,12 @@
 
 ///|
 /// Which end of a number comes first.
+#derive(Eq, Debug)
 pub(all) enum Order {
   Little
   /// Most significant byte first, which is what a network order is.
   Big
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Order with Eq::{equal, not_equal}
@@ -28,6 +29,7 @@ pub extend Order with Debug::{to_repr}
 /// rest, because a document has no width and no offset. The width alone is
 /// still worth writing as a `format`, which is how the JSON family already
 /// distinguishes `int32` from `int64`.
+#derive(Eq, Debug)
 pub(all) struct Layout {
   /// The value's own kind.
   kind : Type
@@ -46,7 +48,7 @@ pub(all) struct Layout {
   /// where it stands — which a format that sends a shared value once and
   /// points at it twice has to know before it reads.
   reference : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Layout with Eq::{equal, not_equal}

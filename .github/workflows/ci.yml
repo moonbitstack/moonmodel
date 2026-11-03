@@ -37,11 +37,7 @@ jobs:
           moon update
 
       - name: moon check
-        # `deprecated_syntax` is exempt for now: a compiler released after this
-        # commit deprecates `} derive(...)`, which every type in the module and
-        # the five modules beside it still use. Migrating them together is a
-        # change of its own; until then the deprecation is not an error.
-        run: moon check --target all --deny-warn --warn-list "-deprecated_syntax"
+        run: moon check --target all --deny-warn
 
       - name: moon build
         run: moon build --target all

@@ -8,6 +8,7 @@
 /// at each other and a projection decides for itself whether to inline or to
 /// emit a reference — `$ref` in JSON Schema, a foreign key in SQL, a named
 /// type in SDL.
+#derive(Eq, Debug)
 pub(all) enum Type {
   Bool
   /// A 32-bit integer.
@@ -46,7 +47,7 @@ pub(all) enum Type {
   /// projection either passes it through as it stands or reports that it
   /// cannot carry it. Reach for it last: nothing reads inside it.
   Raw(Json)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Type with Eq::{equal, not_equal}
@@ -62,6 +63,7 @@ pub extend Type with Debug::{to_repr}
 /// open ones (JSON Schema's `exclusiveMinimum` and `exclusiveMaximum`).
 /// `shortest` and `longest` bound a string's characters and a list's items
 /// alike, which is how every one of the four spells it too.
+#derive(Eq, Debug)
 pub(all) struct Check {
   least : Double?
   most : Double?
@@ -86,7 +88,7 @@ pub(all) struct Check {
   /// is about the collection the records live in, and only SQL can state it.
   /// The other three projections drop it.
   unique : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Check with Eq::{equal, not_equal}
@@ -159,6 +161,7 @@ pub fn Check::is_empty(self : Check) -> Bool {
 /// a type), SQL's `NOT NULL` is the second alone, and GraphQL's `!` is both at
 /// once. Folding them into one field would leave at least one projection
 /// guessing.
+#derive(Eq, Debug)
 pub(all) struct Field {
   name : String
   kind : Type
@@ -167,7 +170,7 @@ pub(all) struct Field {
   doc : String
   default : Json?
   check : Check
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Field with Eq::{equal, not_equal}
@@ -193,11 +196,12 @@ pub fn Field::new(
 
 ///|
 /// A named type and its fields.
+#derive(Eq, Debug)
 pub(all) struct Model {
   name : String
   doc : String
   fields : Array[Field]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Model with Eq::{equal, not_equal}

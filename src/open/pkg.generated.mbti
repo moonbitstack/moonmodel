@@ -3,22 +3,24 @@ package "moonbitstack/moonmodel/open"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "moonbitstack/moonmodel",
 }
 
 // Values
-pub fn of(@moonmodel.Model, dialect? : Dialect, title? : Bool) -> Json
+pub fn of(@moonmodel.Model, dialect? : Dialect, title? : Bool) -> @json.Json
 
-pub fn schemas(ArrayView[@moonmodel.Model], dialect? : Dialect) -> Json
+pub fn schemas(ArrayView[@moonmodel.Model], dialect? : Dialect) -> @json.Json
 
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum Dialect {
   Swagger20
   OpenApi30
   OpenApi31
-} derive(Eq, @debug.Debug)
+}
 pub fn Dialect::at(Self) -> String
 pub fn Dialect::equal(Self, Self) -> Bool
 pub fn Dialect::holder(Self) -> String

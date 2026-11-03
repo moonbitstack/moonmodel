@@ -2,16 +2,17 @@
 package "moonbitstack/moonmodel/verify"
 
 import {
+  "moonbitlang/core/json",
   "moonbitstack/moonmodel",
   "moonbitstack/moonschema",
 }
 
 // Values
-pub fn faults(@moonmodel.Model, Json, known? : Array[@moonmodel.Model]) -> Array[@moonschema.Fault] raise
+pub fn faults(@moonmodel.Model, @json.Json, known? : Array[@moonmodel.Model]) -> Array[@moonschema.Fault] raise
 
 pub fn schema(@moonmodel.Model, known? : Array[@moonmodel.Model]) -> @moonschema.Schema raise
 
-pub fn valid(@moonmodel.Model, Json, known? : Array[@moonmodel.Model]) -> Bool raise
+pub fn valid(@moonmodel.Model, @json.Json, known? : Array[@moonmodel.Model]) -> Bool raise
 
 // Errors
 pub(all) suberror Refused {

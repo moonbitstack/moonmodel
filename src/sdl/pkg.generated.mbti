@@ -18,10 +18,11 @@ pub let stamp : String
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct Skipped {
   field : String
   why : String
-} derive(Eq, @debug.Debug)
+}
 pub fn Skipped::equal(Self, Self) -> Bool
 pub fn Skipped::not_equal(Self, Self) -> Bool
 pub fn Skipped::to_repr(Self) -> @debug.Repr
