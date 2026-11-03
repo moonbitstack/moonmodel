@@ -23,6 +23,7 @@ fn main {
     home: { city: "London", zip: "12345", },
     tags: ["maths"],
     joined: "1842-01-01T00:00:00Z",
+    count: 0,
     visits: 0,
   }
   println("\{ada.name} of \{ada.home.city}")

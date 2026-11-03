@@ -41,6 +41,8 @@ pub struct User {
   tags : Array[String]
   #model.field(kind="stamp")
   joined : String
+  #model.field(kind="uint16-be-ref")
+  count : Int32
   #model.skip
   visits : Int32
 }

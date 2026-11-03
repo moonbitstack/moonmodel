@@ -328,3 +328,70 @@ test "the place in an error is the annotation's" {
   )
   assert_true(got.contains("models.mbt:3:"))
 }
+
+///|
+/// A width, a byte order and a reference mark belong to the type, so an
+/// annotation states them in the same `kind=` word the description reads back:
+/// one table, read from both ends.
+test "a kind word states the layout a byte format needs" {
+  let source =
+    #|#model.derive
+    #|pub struct Counter {
+    #|  #model.field(kind="uint16")
+    #|  count : Int
+    #|  #model.field(kind="int32-be", least="0")
+    #|  size : Int
+    #|  #model.field(kind="text-ref")
+    #|  name : String
+    #|  #model.field(kind="float32")
+    #|  ratio : Double
+    #|  #model.field(kind="uint16", default="7")
+    #|  limit : Int
+    #|}
+  let code = generate(source)
+  assert_true(has(code, "@moonmodel.Layout::new(Int, bits=16, unsigned=true)"))
+  assert_true(
+    has(
+      code, "@moonmodel.Layout::new(Int, bits=32, order=@moonmodel.Order::Big)",
+    ),
+  )
+  assert_true(has(code, "check=@moonmodel.Check::new(least=0.0)"))
+  assert_true(has(code, "@moonmodel.Layout::new(Text, reference=true)"))
+  assert_true(has(code, "@moonmodel.Layout::new(Real, bits=32)"))
+  // A default is read by the kind inside the layout, so `"7"` is a number.
+  assert_true(has(code, "default=7"))
+}
+
+///|
+/// A word the vocabulary does not have is refused where it is written, and the
+/// message says what a word of this kind looks like: a typo should not become
+/// a type nobody meant.
+test "a kind word that is not a type is refused" {
+  let message = refused(
+    (
+      #|#model.derive
+      #|pub struct T {
+      #|  #model.field(kind="uint24")
+      #|  x : Int
+      #|}
+    ),
+  )
+  assert_true(message.contains("uint24"))
+  assert_true(message.contains("uint16"))
+}
+
+///|
+/// A bound follows the kind inside the layout: a width says how the number is
+/// written, not that it is not a number.
+test "a bound follows the kind inside a layout" {
+  let message = refused(
+    (
+      #|#model.derive
+      #|pub struct T {
+      #|  #model.field(kind="uint16", shortest="1")
+      #|  x : Int
+      #|}
+    ),
+  )
+  assert_true(message.contains("bounds text or a list"))
+}

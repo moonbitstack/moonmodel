@@ -115,6 +115,7 @@ fn uses(kind : @moonmodel.Type, want : @moonmodel.Type) -> Bool {
   }
   match kind {
     List(inner) | Dict(inner) => uses(inner, want)
+    Wire(layout) => uses(layout.kind, want)
     _ => false
   }
 }
@@ -143,6 +144,28 @@ fn written(kind : @moonmodel.Type, stamp : String, bytes : String) -> String? {
         None => None
       }
     Ref(name) => Some(name)
+    // GraphQL's `Int` is signed and 32 bits wide. A number the layout fixes
+    // wider, or one without a sign bit at 32 bits and above, does not fit it
+    // and is carried as a `String` the way a 64-bit integer already is.
+    Wire(layout) =>
+      match layout.kind {
+        Int | Big =>
+          match layout.bits {
+            Some(bits) =>
+              if bits > 32 || (layout.unsigned && bits >= 32) {
+                Some("String")
+              } else {
+                Some("Int")
+              }
+            None =>
+              if layout.unsigned || layout.kind is Big {
+                Some("String")
+              } else {
+                Some("Int")
+              }
+          }
+        other => written(other, stamp, bytes)
+      }
     // There is no map type: a mapping with open keys has to become a list of
     // pairs, and inventing that shape here would put a type in the schema
     // nobody declared.
@@ -164,6 +187,7 @@ fn untypeable(kind : @moonmodel.Type) -> String {
       "every GraphQL type is named; give this model a name and refer to it"
     Any => "anything at all has no GraphQL type"
     Raw(_) => "a schema written out by hand has no GraphQL type"
+    Wire(layout) => untypeable(layout.kind)
     List(_) => "the element has no GraphQL type"
     _ => "no GraphQL type"
   }

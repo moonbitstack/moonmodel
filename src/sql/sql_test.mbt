@@ -211,3 +211,39 @@ test "a closed set is written per value, or not at all" {
   ])
   assert_false(@sql.table(mixed, dialect=Postgres).contains("IN ("))
 }
+
+///|
+/// The width a layout fixes narrows the column where the dialect has a
+/// narrower type. SQLite has one integer type and keeps widths as an affinity.
+/// Postgres has no unsigned integer at all, so a wide unsigned one widens
+/// instead of overflowing. MySQL spells the sign into the type.
+test "a width narrows the column, or widens it where the sign does not fit" {
+  let tiny = @moonmodel.Type::Wire(@moonmodel.Layout::new(Int, bits=8))
+  let small = @moonmodel.Type::Wire(
+    @moonmodel.Layout::new(Int, bits=16, unsigned=true),
+  )
+  let wide = @moonmodel.Type::Wire(
+    @moonmodel.Layout::new(Big, bits=64, unsigned=true),
+  )
+  let ratio = @moonmodel.Type::Wire(@moonmodel.Layout::new(Real, bits=32))
+  assert_eq(kind(tiny, Sqlite), "INTEGER")
+  assert_eq(kind(tiny, Postgres), "SMALLINT")
+  assert_eq(kind(tiny, Mysql), "TINYINT")
+  assert_eq(kind(small, Postgres), "SMALLINT")
+  assert_eq(kind(small, Mysql), "SMALLINT UNSIGNED")
+  // 2^64 - 1 does not fit a BIGINT, so Postgres keeps it in a NUMERIC.
+  assert_eq(kind(wide, Postgres), "NUMERIC(20)")
+  assert_eq(kind(wide, Mysql), "BIGINT UNSIGNED")
+  assert_eq(kind(ratio, Sqlite), "REAL")
+  assert_eq(kind(ratio, Postgres), "REAL")
+  assert_eq(kind(ratio, Mysql), "FLOAT")
+  // A layout that fixes no width is the kind it wraps.
+  assert_eq(kind(Wire(@moonmodel.Layout::new(Int)), Postgres), "INTEGER")
+}
+
+///|
+/// A layout around a type the dialect has no column for is still that type:
+/// the layout is about the bytes, not about what can be stored.
+test "a layout around an unstorable type has no column" {
+  assert_eq(kind(Wire(@moonmodel.Layout::new(Dict(Text))), Postgres), "(none)")
+}

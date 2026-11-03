@@ -88,18 +88,23 @@ fn flag_of(args : @attr.Args?, key : String) -> Bool? {
 
 ///|
 /// The bounds written on a field, as the arguments of `Check::new`.
+///
+/// Which bound may be written follows the type: a number takes the five
+/// numeric ones, text and a list take a length, a pattern and a format are for
+/// text alone, and `distinct` is about one list's own items.
 fn bounds(
   args : @attr.Args?,
-  kind : String,
+  kind : Family,
+  shown : String,
   where_ : String,
 ) -> Array[String] raise {
   let out = []
-  let numeric = kind is ("Int" | "Big" | "Real")
-  let sized = kind == "Text" || kind.has_prefix("List(")
+  let numeric = kind is Integer || kind is Real
+  let sized = kind is Textual || kind is Sequence
   for key in ["least", "most", "over", "under", "step"] {
     if text_of(args, key) is Some(text) {
       if !numeric {
-        fail("\{where_}: `\{key}` bounds a number, and this is \{kind}")
+        fail("\{where_}: `\{key}` bounds a number, and this is \{shown}")
       }
       out.push("\{key}=\{real(text, where_)}")
     }
@@ -107,22 +112,22 @@ fn bounds(
   for key in ["shortest", "longest"] {
     if text_of(args, key) is Some(text) {
       if !sized {
-        fail("\{where_}: `\{key}` bounds text or a list, and this is \{kind}")
+        fail("\{where_}: `\{key}` bounds text or a list, and this is \{shown}")
       }
       out.push("\{key}=\{whole(text, where_)}")
     }
   }
   for key in ["pattern", "format"] {
     if text_of(args, key) is Some(text) {
-      if kind != "Text" {
-        fail("\{where_}: `\{key}` is for text, and this is \{kind}")
+      if !(kind is Textual) {
+        fail("\{where_}: `\{key}` is for text, and this is \{shown}")
       }
       out.push("\{key}=\{quoted(text)}")
     }
   }
   if flag_of(args, "distinct") is Some(true) {
-    if !kind.has_prefix("List(") {
-      fail("\{where_}: `distinct` is for a list, and this is \{kind}")
+    if !(kind is Sequence) {
+      fail("\{where_}: `distinct` is for a list, and this is \{shown}")
     }
     out.push("distinct=true")
   }
@@ -180,21 +185,27 @@ fn field_call(
   }
   let kind = match (text_of(args, "kind"), text_of(args, "model")) {
     (Some(name), _) =>
-      match kind_named(name) {
-        Some(k) => k
-        None => fail("\{what}: `kind=\{quoted(name)}` is not a type")
+      match @moonmodel.Type::of_word(name) {
+        Some(kind) => kind
+        None =>
+          fail(
+            "\{what}: `kind=\{quoted(name)}` is not a type; a width is written as `uint16`, a byte order as a `-be` after it, a reference as `-ref`",
+          )
       }
-    (_, Some(name)) => "Ref(\{quoted(name)})"
+    (_, Some(name)) => @moonmodel.Ref(name)
     _ =>
       match kind_of(base, known) {
-        Some(k) => k
+        Some(kind) => kind
         None =>
           fail(
             "\{what}: `\{field.ty}` has no type of its own; annotate it, or give `#model.field(kind=...)` or `model=`",
           )
       }
   }
-  let parts = [quoted(text_of(args, "name").unwrap_or(field.name)), kind]
+  let parts = [
+    quoted(text_of(args, "name").unwrap_or(field.name)),
+    code_of(kind),
+  ]
   let default = text_of(args, "default")
   let required = flag_of(args, "required").unwrap_or(
     !optional && default is None,
@@ -209,9 +220,9 @@ fn field_call(
     parts.push("doc=\{quoted(doc)}")
   }
   if default is Some(text) {
-    parts.push("default=\{value(text, kind, where_)}")
+    parts.push("default=\{value(text, family(kind), where_)}")
   }
-  let check = bounds(args, kind, what)
+  let check = bounds(args, family(kind), field.ty, what)
   let options = args.map(a => a.strs("option")).unwrap_or([])
   let options = if options.is_empty() {
     known.enums.get(base.trim(chars=" ").to_owned()).unwrap_or([])
@@ -219,7 +230,7 @@ fn field_call(
     options
   }
   if !options.is_empty() {
-    let values = options.map(v => value(v, kind, where_))
+    let values = options.map(v => value(v, family(kind), where_))
     check.push("options=[\{values.join(", ")}]")
   }
   if !check.is_empty() {

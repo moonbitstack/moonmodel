@@ -32,6 +32,13 @@ pub(all) enum Type {
   /// so cannot be referred to; a named one belongs in `Ref` so that the
   /// projections can hoist it and point at it once.
   Nest(Model)
+  /// A value as a byte format lays it out: its kind, and a width, a sign, a
+  /// byte order and a reference mark that a document has no word for.
+  ///
+  /// The kind inside is what a document projection writes; the four layout
+  /// facts are read by the projection that writes bytes, and by anything that
+  /// has to agree with a peer on the shape of a message.
+  Wire(Layout)
   /// Anything at all: JSON Schema's empty schema.
   Any
   /// A schema written out in full, for what this vocabulary cannot say —
@@ -250,6 +257,7 @@ fn names(kind : Type, out : Array[String]) -> Unit {
   match kind {
     Ref(name) => if !out.contains(name) { out.push(name) }
     List(inner) | Dict(inner) => names(inner, out)
+    Wire(layout) => names(layout.kind, out)
     // A nested model has no name of its own, but what it refers to counts.
     Nest(model) =>
       for one in model.fields {

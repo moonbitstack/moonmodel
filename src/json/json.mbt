@@ -79,7 +79,13 @@ pub fn document(
 
 ///|
 /// Every model this one reaches, directly or through another, without
-/// repeats and without itself.
+/// repeats — and the model itself when something in the document refers back
+/// to it.
+///
+/// The root is written at the top and not under `$defs`, so a `$ref` to it
+/// from inside the document would have nothing to resolve against. A model
+/// that refers to itself, or a cycle that comes back to it, has to be repeated
+/// there; one that nothing points at stays where it is.
 fn reachable(
   model : @moonmodel.Model,
   known : Array[@moonmodel.Model],
@@ -90,6 +96,9 @@ fn reachable(
   while pending.length() > 0 {
     let name = pending.remove(0)
     if seen.contains(name) {
+      if name == model.name && !out.contains(model) {
+        out.push(model)
+      }
       continue
     }
     seen.push(name)
@@ -185,6 +194,26 @@ fn shape(kind : @moonmodel.Type, at : String) -> Json {
         ]),
       )
     Ref(name) => Json::object(Map([("$ref", Json::string(at + name))]))
+    // A value a byte format lays out is what its kind is, plus the width when
+    // the layout fixes one. `format` is an open vocabulary here — `int32` and
+    // `int64` are already in it, and the narrower widths are the same word
+    // with another number in it — so a width is written and a reader that does
+    // not know the name still has the type. Byte order and the reference mark
+    // have no keyword at all and are left to the byte projection.
+    Wire(layout) => {
+      let out = shape(layout.kind, at)
+      match layout.format() {
+        Some(format) =>
+          match out {
+            Object(fields) => {
+              fields["format"] = Json::string(format)
+              Json::object(fields)
+            }
+            other => other
+          }
+        None => out
+      }
+    }
     // A model with no name of its own is written where it stands; there is
     // nothing to hoist it under and nothing to point at it.
     Nest(model) => of(model, at~)

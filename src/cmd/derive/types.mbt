@@ -38,40 +38,43 @@ fn map_value(args : String) -> String? {
 }
 
 ///|
-/// The `Type` constructor a field of type `ty` takes, `None` when nothing says.
+/// The description type of a field written as `ty`, `None` when nothing says.
 /// A name from another package is taken to be a model of the same name there:
 /// nothing here can look, and a `Ref` is only a name.
-fn kind_of(ty : String, known : Known) -> String? {
+fn kind_of(ty : String, known : Known) -> @moonmodel.Type? {
   let ty = ty.trim(chars=" ").to_owned()
   match ty {
-    "Bool" => return Some("Bool")
-    "Int" | "Int32" | "Int16" | "UInt16" | "Byte" => return Some("Int")
-    "Int64" | "UInt" | "UInt32" | "UInt64" => return Some("Big")
-    "Double" | "Float" => return Some("Real")
-    "String" => return Some("Text")
-    "Bytes" => return Some("Bytes")
-    "Json" => return Some("Any")
+    "Bool" => return Some(@moonmodel.Bool)
+    "Int" | "Int32" | "Int16" | "UInt16" | "Byte" => return Some(@moonmodel.Int)
+    "Int64" | "UInt" | "UInt32" | "UInt64" => return Some(@moonmodel.Big)
+    "Double" | "Float" => return Some(@moonmodel.Real)
+    "String" => return Some(@moonmodel.Text)
+    "Bytes" => return Some(@moonmodel.Bytes)
+    "Json" => return Some(@moonmodel.Any)
     _ => ()
   }
   for head in ["Array[", "FixedArray[", "ArrayView["] {
     if inside(ty, head) is Some(item) {
-      return kind_of(item, known).map(k => "List(\{k})")
+      return kind_of(item, known).map(k => @moonmodel.List(k))
     }
   }
   if inside(ty, "Map[") is Some(args) {
-    return map_value(args).bind(v => kind_of(v, known)).map(k => "Dict(\{k})")
+    return map_value(args)
+      .bind(v => kind_of(v, known))
+      .map(k => @moonmodel.Dict(k))
   }
+  // An annotated enum is the set of its constructors, written as text.
   if known.enums.contains(ty) {
-    return Some("Text")
+    return Some(@moonmodel.Text)
   }
   if known.structs.get(ty) is Some(name) {
-    return Some("Ref(\{quoted(name)})")
+    return Some(@moonmodel.Ref(name))
   }
   if ty.has_prefix("@") {
     match ty.rev_find(".") {
       Some(at) => {
         let name = ty.exact_view(start=at + 1).to_owned()
-        return Some("Ref(\{quoted(name)})")
+        return Some(@moonmodel.Ref(name))
       }
       None => ()
     }
@@ -80,18 +83,72 @@ fn kind_of(ty : String, known : Known) -> String? {
 }
 
 ///|
-/// The `Type` constructor a `kind=` names.
-fn kind_named(name : String) -> String? {
-  match name.trim(chars=" ").to_lower() {
-    "bool" => Some("Bool")
-    "int" => Some("Int")
-    "big" => Some("Big")
-    "real" => Some("Real")
-    "text" => Some("Text")
-    "bytes" => Some("Bytes")
-    "stamp" => Some("Stamp")
-    "any" => Some("Any")
-    _ => None
+/// What a type is for the sake of a bound and of a default's spelling.
+///
+/// Finer than "is it a number" and coarser than the type itself: a whole
+/// number's default is written as one and a real's with a decimal point, and
+/// the bounds differ in which of the two they may be written on.
+priv enum Family {
+  Flag
+  Integer
+  Real
+  Textual
+  Sequence
+  Mapping
+  Opaque
+}
+
+///|
+fn family(kind : @moonmodel.Type) -> Family {
+  match kind {
+    Bool => Flag
+    Int | Big => Integer
+    Real => Real
+    // A layout is about how a value is written, not about what it is, so a
+    // bound and a default follow the kind inside it.
+    Wire(layout) => family(layout.kind)
+    Text => Textual
+    List(_) => Sequence
+    Dict(_) => Mapping
+    _ => Opaque
+  }
+}
+
+///|
+/// A description type as the code that builds it, in the package the
+/// generated file lives in.
+fn code_of(kind : @moonmodel.Type) -> String raise {
+  match kind {
+    Bool => "Bool"
+    Int => "Int"
+    Big => "Big"
+    Real => "Real"
+    Text => "Text"
+    Bytes => "Bytes"
+    Stamp => "Stamp"
+    Any => "Any"
+    List(inner) => "List(\{code_of(inner)})"
+    Dict(inner) => "Dict(\{code_of(inner)})"
+    Ref(name) => "Ref(\{quoted(name)})"
+    Wire(layout) => {
+      let parts = ["@moonmodel.Layout::new(\{code_of(layout.kind)}"]
+      match layout.bits {
+        Some(bits) => parts.push("bits=\{bits}")
+        None => ()
+      }
+      if layout.unsigned {
+        parts.push("unsigned=true")
+      }
+      if layout.order == @moonmodel.Order::Big {
+        parts.push("order=@moonmodel.Order::Big")
+      }
+      if layout.reference {
+        parts.push("reference=true")
+      }
+      "Wire(\{parts.join(", ")}))"
+    }
+    Nest(_) => fail("moonmodel: an annotation cannot state a nested model")
+    Raw(_) => fail("moonmodel: an annotation cannot state a schema by hand")
   }
 }
 
@@ -120,20 +177,23 @@ fn whole(text : String, where_ : String) -> String raise {
 }
 
 ///|
-/// A value written in a string, as the `Json` literal for a field of `kind`. The
-/// field's type says how to read it, so a text field's `"0"` stays text.
-fn value(text : String, kind : String, where_ : String) -> String raise {
+/// A value written in a string, as the `Json` literal for a field of this
+/// family. The field's type says how to read it, so a text field's `"0"` stays
+/// text.
+fn value(text : String, kind : Family, where_ : String) -> String raise {
   match kind {
-    "Text" => quoted(text)
-    "Int" | "Big" => whole(text, where_)
-    "Real" => real(text, where_)
-    "Bool" => {
+    Textual => quoted(text)
+    Integer => whole(text, where_)
+    Real => real(text, where_)
+    Flag => {
       guard text is ("true" | "false") else {
         fail("\{where_}: `\{text}` is not true or false")
       }
       text
     }
-    _ => {
+    // A list, a mapping and a value of no shape at all are written as the
+    // JSON they are: an attribute has no syntax of its own for them.
+    Sequence | Mapping | Opaque => {
       let parsed = @json.parse(text) catch {
         _ => fail("\{where_}: `\{text}` is not JSON")
       }

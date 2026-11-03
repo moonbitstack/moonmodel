@@ -370,3 +370,69 @@ test "a document reaches references inside a nested model" {
   ])
   assert_eq(model.mentions(), ["Address"])
 }
+
+///|
+/// A width a format fixes is written as the `format` word that names it, which
+/// is the one place the JSON family already tells one integer from another.
+/// A byte order and a reference mark have no keyword, and a document says
+/// nothing about them.
+test "a width is a format word, and the rest is left to the byte format" {
+  assert_eq(plain(Wire(@moonmodel.Layout::new(Int, bits=8))), {
+    "type": "integer",
+    "format": "int8",
+  })
+  assert_eq(plain(Wire(@moonmodel.Layout::new(Int, bits=16, unsigned=true))), {
+    "type": "integer",
+    "format": "uint16",
+  })
+  assert_eq(plain(Wire(@moonmodel.Layout::new(Big, bits=64, unsigned=true))), {
+    "type": "integer",
+    "format": "uint64",
+  })
+  assert_eq(plain(Wire(@moonmodel.Layout::new(Real, bits=32))), {
+    "type": "number",
+    "format": "float32",
+  })
+  // No width of its own: the kind's own word, which is what `Int` writes.
+  assert_eq(plain(Wire(@moonmodel.Layout::new(Int))), {
+    "type": "integer",
+    "format": "int32",
+  })
+  assert_eq(
+    plain(
+      Wire(
+        @moonmodel.Layout::new(
+          Int,
+          bits=16,
+          order=@moonmodel.Order::Big,
+          reference=true,
+        ),
+      ),
+    ),
+    { "type": "integer", "format": "int16" },
+  )
+}
+
+///|
+/// A model that refers to itself is the one document that needs the root
+/// twice: the top of the document, and under `$defs` for the `$ref` inside it
+/// to resolve against.
+test "a model that refers to itself is repeated under $defs" {
+  let node = @moonmodel.Model::new("Node", [
+    @moonmodel.Field::new("next", Ref("Node"), required=false),
+  ])
+  let reference : Json = { "$ref": "#/$defs/Node" }
+  let properties : Json = { "next": reference }
+  let written : Json = {
+    "type": "object",
+    "title": "Node",
+    "properties": properties,
+  }
+  assert_eq(@json.document(node), {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "title": "Node",
+    "properties": properties,
+    "$defs": Json::object({ "Node": written }),
+  })
+}

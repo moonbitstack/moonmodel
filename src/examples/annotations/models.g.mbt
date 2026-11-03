@@ -67,6 +67,18 @@ let user_description : @moonmodel.Model = @moonmodel.Model::new(
       check=@moonmodel.Check::new(longest=8, distinct=true),
     ),
     @moonmodel.Field::new("joined", Stamp),
+    @moonmodel.Field::new(
+      "count",
+      Wire(
+        @moonmodel.Layout::new(
+          Int,
+          bits=16,
+          unsigned=true,
+          order=@moonmodel.Order::Big,
+          reference=true,
+        ),
+      ),
+    ),
   ],
   doc="somebody with an account",
 )

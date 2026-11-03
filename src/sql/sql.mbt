@@ -169,7 +169,68 @@ fn kind_of(kind : @moonmodel.Type, dialect : Dialect) -> String? {
         Some(inner) => Some(inner + "[]")
         None => None
       }
+    (Wire(layout), _) => column_of(layout, dialect)
     _ => None
+  }
+}
+
+///|
+/// The column type for a value whose width a format fixes.
+///
+/// The width narrows the column where the dialect has a narrower type. SQLite
+/// has one integer type and keeps widths as an affinity, so nothing changes
+/// there. Postgres has no unsigned integer at all: a 32-bit one is kept in a
+/// BIGINT and a 64-bit one in a NUMERIC wide enough for every value of it.
+/// MySQL spells the sign into the type.
+fn column_of(layout : @moonmodel.Layout, dialect : Dialect) -> String? {
+  match layout.kind {
+    Int | Big =>
+      match layout.bits {
+        None => kind_of(layout.kind, dialect)
+        Some(bits) =>
+          match dialect {
+            Sqlite => Some("INTEGER")
+            Postgres =>
+              if layout.unsigned {
+                if bits > 32 {
+                  Some("NUMERIC(20)")
+                } else if bits > 16 {
+                  Some("BIGINT")
+                } else {
+                  Some("SMALLINT")
+                }
+              } else if bits > 32 {
+                Some("BIGINT")
+              } else if bits > 16 {
+                Some("INTEGER")
+              } else {
+                Some("SMALLINT")
+              }
+            Mysql => {
+              let base = if bits > 32 {
+                "BIGINT"
+              } else if bits > 16 {
+                "INT"
+              } else if bits > 8 {
+                "SMALLINT"
+              } else {
+                "TINYINT"
+              }
+              Some(if layout.unsigned { base + " UNSIGNED" } else { base })
+            }
+          }
+      }
+    Real =>
+      if layout.bits is Some(32) {
+        match dialect {
+          Sqlite => Some("REAL")
+          Postgres => Some("REAL")
+          Mysql => Some("FLOAT")
+        }
+      } else {
+        kind_of(Real, dialect)
+      }
+    other => kind_of(other, dialect)
   }
 }
 
@@ -183,6 +244,7 @@ fn unstorable(kind : @moonmodel.Type) -> String {
     Ref(name) =>
       "a reference to \{name} is a foreign key, which needs that table's key"
     Nest(_) => "a nested model needs its own table"
+    Wire(layout) => unstorable(layout.kind)
     Any => "anything at all has no column type"
     Raw(_) => "a schema written out by hand has no column type"
     _ => "no column type"

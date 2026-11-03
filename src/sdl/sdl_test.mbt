@@ -235,3 +235,40 @@ test "the two new shapes have no GraphQL type" {
   assert_true(skipped[0].why.contains("give this model a name"))
   assert_true(skipped[1].why.contains("written out by hand"))
 }
+
+///|
+/// GraphQL's `Int` is signed and 32 bits wide, so a number a layout fixes
+/// wider than that — or without a sign bit at 32 bits and above — does not fit
+/// it and is carried as a `String`, the way a 64-bit integer already is.
+test "a width GraphQL's Int cannot hold becomes a String" {
+  let model = @moonmodel.Model::new("T", [
+    @moonmodel.Field::new(
+      "tiny",
+      Wire(@moonmodel.Layout::new(Int, bits=8, unsigned=true)),
+    ),
+    @moonmodel.Field::new(
+      "count",
+      Wire(@moonmodel.Layout::new(Int, bits=16, unsigned=true)),
+    ),
+    @moonmodel.Field::new(
+      "serial",
+      Wire(@moonmodel.Layout::new(Big, bits=64, unsigned=true)),
+    ),
+    @moonmodel.Field::new("ratio", Wire(@moonmodel.Layout::new(Real, bits=32))),
+  ])
+  let (text, _skipped) = @sdl.of(model)
+  assert_true(text.contains("tiny: Int!"))
+  assert_true(text.contains("count: Int!"))
+  assert_true(text.contains("serial: String!"))
+  assert_true(text.contains("ratio: Float!"))
+}
+
+///|
+/// A scalar a layout wraps is still a scalar the document has to declare once,
+/// which is what a document writer looks for before it writes it.
+test "a scalar inside a layout is declared once" {
+  let model = @moonmodel.Model::new("T", [
+    @moonmodel.Field::new("at", Wire(@moonmodel.Layout::new(Stamp))),
+  ])
+  assert_true(@sdl.document([model][:]).contains("scalar DateTime"))
+}
