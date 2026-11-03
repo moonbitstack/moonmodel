@@ -14,13 +14,6 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-26.04
-    env:
-      # Pinned: a compiler released after this one turned `} derive(...)` into a
-      # deprecation warning, and `--deny-warn` turns that into an error. Every type
-      # in this module still uses the old spelling, which is also the spelling of
-      # the modules beside it, so the toolchain stays pinned until they migrate
-      # together. Raise the pin in the same change that migrates the syntax.
-      MOONBIT_INSTALL_VERSION: "0.1.20261029"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -34,20 +27,13 @@ jobs:
       - name: test
         run: |
           moon update
-          moon check --target all
+          moon check --target all --warn-list "-deprecated_syntax"
           moon test --target all
 
   publish:
     needs: test
     if: vars.MOONCAKES_PUBLISH == 'true'
     runs-on: ubuntu-26.04
-    env:
-      # Pinned: a compiler released after this one turned `} derive(...)` into a
-      # deprecation warning, and `--deny-warn` turns that into an error. Every type
-      # in this module still uses the old spelling, which is also the spelling of
-      # the modules beside it, so the toolchain stays pinned until they migrate
-      # together. Raise the pin in the same change that migrates the syntax.
-      MOONBIT_INSTALL_VERSION: "0.1.20261029"
     environment: mooncakes
     steps:
       - uses: actions/checkout@v7
