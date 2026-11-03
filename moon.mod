@@ -13,6 +13,7 @@ keywords = [
   "schema",
   "data-model",
   "validation",
+  "validator",
   "serialization",
   "serde",
   "json",
@@ -24,6 +25,12 @@ keywords = [
   "sdl",
   "derive",
   "annotations",
+  "codegen",
+  "binary",
+  "byte-order",
+  "endianness",
+  "fixed-width",
+  "layout",
   "pydantic",
   "mapping",
   "moonbit",
@@ -35,6 +42,7 @@ import {
   "moonbitstack/moonast@0.2.3",
   "moonbitlang/parser@0.4.6",
   "moonbitlang/async@0.22.5",
+  "moonbitstack/moonschema@0.2.4",
 }
 
 source = "src"

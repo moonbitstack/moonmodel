@@ -7,4 +7,5 @@ import {
   "moonbitstack/moonmodel/open",
   "moonbitstack/moonmodel/sdl",
   "moonbitstack/moonmodel/sql",
+  "moonbitstack/moonmodel/verify",
 }

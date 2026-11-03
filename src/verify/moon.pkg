@@ -1,0 +1,17 @@
+// Copyright 2026 Leo Cheng
+// SPDX-License-Identifier: Apache-2.0
+
+// The description, checked: a model written out as JSON Schema 2020-12 and
+// handed to a reader that knows the specification. This package exists for its
+// dependencies — the description itself has none — so a program that only
+// writes schemas never links a validator.
+import {
+  "moonbitstack/moonmodel",
+  "moonbitstack/moonmodel/json",
+  "moonbitstack/moonschema",
+}
+
+import {
+  "moonbitstack/moonmodel/verify",
+  "moonbitstack/moonmodel",
+} for "test"

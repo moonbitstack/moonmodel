@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonmodel/verify"
+
+import {
+  "moonbitstack/moonmodel",
+  "moonbitstack/moonschema",
+}
+
+// Values
+pub fn faults(@moonmodel.Model, Json, known? : Array[@moonmodel.Model]) -> Array[@moonschema.Fault] raise
+
+pub fn schema(@moonmodel.Model, known? : Array[@moonmodel.Model]) -> @moonschema.Schema raise
+
+pub fn valid(@moonmodel.Model, Json, known? : Array[@moonmodel.Model]) -> Bool raise
+
+// Errors
+pub(all) suberror Refused {
+  Missing(name~ : String)
+}
+
+// Types and methods
+
+// Type aliases
+
+// Traits

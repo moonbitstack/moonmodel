@@ -77,6 +77,21 @@ fn customer() -> @moonmodel.Model {
         "either",
         Raw({ "oneOf": [{ "type": "string" }, { "type": "integer" }] }),
       ),
+      // A value a byte format writes itself: two bytes, no sign, most
+      // significant first. A document has no word for that and writes the
+      // width it can state — `format: uint16` — and nothing about the rest.
+      @moonmodel.Field::new(
+        "counter",
+        Wire(
+          @moonmodel.Layout::new(
+            Int,
+            bits=16,
+            unsigned=true,
+            order=@moonmodel.Order::Big,
+          ),
+        ),
+        doc="a count a byte format writes in two bytes",
+      ),
     ],
     doc="somebody with an account",
   )
@@ -202,4 +217,28 @@ fn main {
   heading("a document declares its scalars")
   println(@sdl.document([address, customer][:], stamp="Timestamp"))
   println("the presets are \{@sdl.stamp} and \{@sdl.bytes}")
+
+  // The description is also what an instance is checked against: it is written
+  // out as JSON Schema and read by a validator that knows the specification,
+  // so there is one schema rather than a copy of it kept in step by hand.
+  heading("checking an instance")
+  let account = @moonmodel.Model::new("Account", [
+    @moonmodel.Field::new("name", Text, check=@moonmodel.Check::new(shortest=1)),
+    @moonmodel.Field::new(
+      "age",
+      Int,
+      required=false,
+      check=@moonmodel.Check::new(least=0.0, most=150.0),
+    ),
+  ])
+  // Read the description once and check as many instances as there are.
+  let checker = @verify.schema(account) catch {
+    error => abort("the description is not a schema: \{error}")
+  }
+  println(checker.valid({ "name": "ada", "age": Json::number(36.0) }))
+  let wrong : Json = { "age": Json::number(151.0) }
+  println(checker.valid(wrong))
+  for fault in checker.faults(wrong) {
+    println("\{fault.at}: \{fault.keyword} — \{fault.message}")
+  }
 }
