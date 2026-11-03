@@ -70,6 +70,9 @@
   .rose-l{font-family:'Cinzel',serif;font-size:14px;fill:var(--ink);opacity:.85;letter-spacing:.08em;}
   .wave{stroke:var(--route);stroke-width:.9;opacity:.6;fill:none;}
   .ship{fill:var(--ink);opacity:.6;}
+  .sail{fill:var(--ink);opacity:.4;}
+  .rig{stroke:var(--ink);stroke-width:.8;fill:none;opacity:.5;}
+  .sea-wake{fill:none;stroke:var(--ink);stroke-width:.9;opacity:.32;}
   .sea-label{font-family:'Cinzel',serif;font-size:13px;letter-spacing:.3em;fill:var(--ink);opacity:.74;}
   .sounding{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.05em;
             fill:var(--ink-faint);opacity:.6;}
@@ -94,6 +97,9 @@
 
   .pill{fill:none;stroke:var(--ink);stroke-width:.9;opacity:.55;}
   .pill-text{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;opacity:.80;}
+  .chip{cursor:pointer;}
+  .chip .pill{pointer-events:all;}
+  a{cursor:pointer;}
 
   .hit{fill:transparent;cursor:pointer;}
   .hit:focus{outline:none;}
@@ -113,6 +119,35 @@
   .row{opacity:0;transform:translate(-18px,0);transition:opacity .5s ease,transform .65s cubic-bezier(.2,.7,.3,1);}
   .row.shown{opacity:1;transform:none;}
   html.static .row{opacity:1;transform:none;transition:none;}
+
+  /* the guided tour: a brass spotlight and a card, no browser default anywhere */
+  body.guiding #stage{pointer-events:none;}
+  .guide{position:fixed;inset:0;z-index:40;display:none;}
+  .guide.on{display:block;}
+  .spot{position:absolute;border:2px solid var(--accent);border-radius:2px;
+        box-shadow:0 0 0 9999px rgba(20,14,6,.44);pointer-events:none;
+        transition:left .34s cubic-bezier(.2,.7,.3,1),top .34s cubic-bezier(.2,.7,.3,1),
+                   width .34s cubic-bezier(.2,.7,.3,1),height .34s cubic-bezier(.2,.7,.3,1);}
+  .gcard{position:absolute;width:440px;max-width:86vw;background:var(--paper);
+         border:1px solid var(--ink);padding:22px 24px 18px;
+         box-shadow:0 0 0 1px var(--ink),0 18px 50px -24px rgba(0,0,0,.7);}
+  .gcard::after{content:"";position:absolute;inset:7px;border:1px solid var(--ink);opacity:.25;pointer-events:none;}
+  .gstep{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.2em;opacity:.55;}
+  .gtitle{font-family:'Cinzel',serif;font-size:22px;letter-spacing:.04em;margin:.28em 0 .22em;}
+  .gtext{font-size:13.5px;line-height:1.62;opacity:.9;margin:0 0 16px;}
+  .gacts{display:flex;gap:10px;justify-content:flex-end;}
+  .gbtn{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;
+        padding:8px 16px;border:1px solid var(--ink);background:var(--paper);
+        color:var(--ink);cursor:pointer;}
+  .gbtn.primary{background:var(--accent);color:var(--paper);border-color:var(--accent);}
+  .gbtn.ghost{opacity:.65;}
+  .gbtn:hover{background:var(--accent);color:var(--paper);border-color:var(--accent);}
+  .gtoggle{position:fixed;left:18px;bottom:18px;z-index:35;
+           font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;
+           padding:8px 14px;border:1px solid var(--accent);background:var(--paper);
+           color:var(--ink);cursor:pointer;text-transform:uppercase;}
+  .gtoggle:hover{background:var(--accent);color:var(--paper);}
+  .gtoggle::before{content:"? ";opacity:.6;}
 </style>
 </head>
 <body>
@@ -121,6 +156,20 @@
   <div class="scroll scroll-y" id="sy"><div class="track"></div><div class="thumb" id="ty"></div></div>
   <svg id="sheet" xmlns="http://www.w3.org/2000/svg" aria-label="Moonmodel: one field description, four projections"></svg>
 </div>
+
+<div id="guide" class="guide" aria-hidden="true">
+  <div class="spot" id="spot"></div>
+  <div class="gcard" id="gcard" role="dialog" aria-modal="true">
+    <div class="gstep" id="gstep"></div>
+    <h3 class="gtitle" id="gtitle"></h3>
+    <p class="gtext" id="gtext"></p>
+    <div class="gacts">
+      <button class="gbtn ghost" id="gskip" type="button">SKIP</button>
+      <button class="gbtn primary" id="gnext" type="button">NEXT</button>
+    </div>
+  </div>
+</div>
+<button id="gtoggle" class="gtoggle" type="button" aria-label="open the guided tour">GUIDE</button>
 
 <script>
 window.__SHEET__ = {
@@ -231,7 +280,7 @@ const PROOF_Y = NOTES_BOTTOM + 48;
 const FOOT_RULE = PROOF_Y + 32;
 const FOOT_TEXT = FOOT_RULE + 30;
 const SEA_TOP = FOOT_TEXT + 44;
-const SEA_H = 128;
+const SEA_H = 210;
 const H = SEA_TOP + SEA_H + FRAME;
 
 const SVGNS = 'http://www.w3.org/2000/svg';
@@ -410,14 +459,29 @@ const cardCw = (W - FRAME - 24) - cardC;
 
 add(gNotes, 'rect', { x: cardB, y: NOTES_TOP, width: cardBw, height: NOTES_H, class:'dash' });
 txt(gNotes, cardB + 16, NOTES_TOP + 26, 'QUICK START', 'caption');
-[
+const quickLines = [
   'import { "moonbitstack/moonmodel" }',
   '',
   '#model.derive',
   'pub struct User { id : Int64 }',
   '',
   '@json.of(User::describe())',
-].forEach((line, i) => txt(gNotes, cardB + 16, NOTES_TOP + 56 + i * 21, line, 'code'));
+];
+quickLines.forEach((line, i) => txt(gNotes, cardB + 16, NOTES_TOP + 56 + i * 21, line, 'code'));
+// the whole card copies the snippet — a home page is also an entrance
+const quickHint = txt(gNotes, cardB + cardBw - 16, NOTES_TOP + 26, 'CLICK TO COPY', 'desc');
+quickHint.setAttribute('text-anchor', 'end');
+quickHint.style.opacity = '.42';
+const quickHit = add(gNotes, 'rect', { x: cardB, y: NOTES_TOP, width: cardBw, height: NOTES_H, class:'hit' });
+quickHit.setAttribute('aria-label', 'copy the example');
+quickHit.addEventListener('click', e => {
+  e.stopPropagation();
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(quickLines.join('\n'));
+    quickHint.textContent = 'COPIED';
+    setTimeout(() => { quickHint.textContent = 'CLICK TO COPY'; }, 1200);
+  }
+});
 
 add(gNotes, 'rect', { x: cardC, y: NOTES_TOP, width: cardCw, height: NOTES_H, class:'dash' });
 txt(gNotes, cardC + 16, NOTES_TOP + 26, 'THE SURFACE', 'caption');
@@ -475,18 +539,27 @@ txt(gFoot, FRAME + 24, FOOT_TEXT,
   'ONE SHEET, READ FOUR TIMES — THE SAME DESCRIPTION, AND NOT ONE SHAPE INVENTED FOR IT', 'meta');
 
 const installText = 'moon add moonbitstack/moonmodel';
-const pillW = installText.length * 5.4 + 26;
-add(gFoot, 'rect', {
-  x: W-FRAME-24-pillW, y: FOOT_TEXT-17, width: pillW, height: 26, rx: 13, class:'pill',
+// Measure the label so the pill always contains it — the old width estimate
+// let the command run out past the frame on a long name.
+const pill = txt(gFoot, 0, FOOT_TEXT, installText, 'pill-text');
+const pillPad = 16;
+const pillMeasured = pill.getComputedTextLength ? pill.getComputedTextLength() : 0;
+// never trust a font that may not have loaded yet: take the wider of the two
+const pillW = Math.max(pillMeasured, installText.length * 6.2) + pillPad * 2;
+const pillX = W - FRAME - 24 - pillW;
+const pillRect = add(gFoot, 'rect', {
+  x: pillX, y: FOOT_TEXT - 17, width: pillW, height: 26, rx: 13, class:'pill',
 });
-const pill = txt(gFoot, W-FRAME-24-pillW+13, FOOT_TEXT, installText, 'pill-text');
-pill.style.pointerEvents = 'auto';
-pill.style.cursor = 'copy';
-const pillRect = gFoot.lastChild.previousSibling;
-pillRect.style.pointerEvents = 'auto';
-pillRect.style.cursor = 'copy';
+gFoot.appendChild(pill);                       // keep the label above its pill
+pill.setAttribute('x', pillX + pillPad);
+
+// the whole pill is a copy button, not only its text
+const pillHit = add(gFoot, 'rect', {
+  x: pillX, y: FOOT_TEXT - 17, width: pillW, height: 26, rx: 13, class:'hit',
+});
+pillHit.setAttribute('aria-label', 'copy the install command');
 function copyInstall(e){
-  e.stopPropagation();
+  if (e) e.stopPropagation();
   const done = () => {
     pill.textContent = 'COPIED';
     setTimeout(() => { pill.textContent = installText; }, 1200);
@@ -497,48 +570,99 @@ function copyInstall(e){
     done();
   }
 }
-pill.addEventListener('click', copyInstall);
-pillRect.addEventListener('click', copyInstall);
-
-// the sea under the chart: a horizon, soundings, waves, a ship, and the sheet's own voice
-const gSea = group('g-sea', 'row');
-add(gSea, 'path', { d:`M${FRAME} ${SEA_TOP} H${W-FRAME}`, class:'rule' });
-add(gSea, 'path', { d:`M${FRAME} ${SEA_TOP + 6} H${W-FRAME}`, class:'rule' });
-
-// a few of the numbers a chart writes beside the water
-[['12', 0.10], ['40', 0.30], ['18', 0.50], ['7', 0.70]].forEach(([n, f]) => {
-  txt(gSea, FRAME + (W - FRAME * 2) * f, SEA_TOP + 34, n, 'sounding');
+[pillRect, pill, pillHit].forEach(n => {
+  n.style.pointerEvents = 'auto'; n.style.cursor = 'copy';
+  n.addEventListener('click', copyInstall);
 });
 
-function wavePath(x0, x1, y, amp, len){
-  let d = `M${x0} ${y}`;
-  let x = x0;
+// the sea under the chart: a wash, long swells, soundings and a ship — the
+// part of the sheet that says "map" before it says "table".
+const gSea = group('g-sea', 'row');
+const seaY = SEA_TOP, seaB = H - FRAME;
+
+const seaWash = add(defs, 'linearGradient', { id:'sea-wash', x1:'0', y1:'0', x2:'0', y2:'1' });
+add(seaWash, 'stop', { offset:'0', 'stop-color':'var(--sea)', 'stop-opacity':'0.15' });
+add(seaWash, 'stop', { offset:'1', 'stop-color':'var(--sea)', 'stop-opacity':'0.85' });
+add(gSea, 'rect', { x:FRAME, y:seaY, width:W-FRAME*2, height:seaB-seaY, fill:'url(#sea-wash)' });
+
+// the edge of soundings: a double horizon, then the water
+add(gSea, 'path', { d:`M${FRAME} ${seaY} H${W-FRAME}`, class:'rule' });
+add(gSea, 'path', { d:`M${FRAME} ${seaY + 7} H${W-FRAME}`, class:'rule' });
+
+// long swells, each layer deeper and a little heavier than the one above
+function swell(x0, x1, y, amp, step){
+  let d = `M${x0} ${y}`, x = x0, up = true;
   while (x < x1){
-    const nx = Math.min(x1, x + len);
-    const half = (nx - x) / 2;
-    d += ` c ${half*0.5} ${-amp} ${half*1.3} ${-amp} ${half} 0`;
-    d += ` c ${half*0.7} ${amp} ${half*1.3} ${amp} ${half} 0`;
-    x = nx;
+    const nx = Math.min(x1, x + step);
+    const cx = (x + nx) / 2;
+    d += ` Q${cx.toFixed(1)} ${(y + (up ? -amp : amp)).toFixed(1)} ${nx.toFixed(1)} ${y}`;
+    x = nx; up = !up;
   }
   return d;
 }
-add(gSea, 'path', { d: wavePath(FRAME, W-FRAME, SEA_TOP + 44, 7, 46), class:'wave' });
-add(gSea, 'path', { d: wavePath(FRAME, W-FRAME, SEA_TOP + 70, 5, 56), class:'wave' });
-add(gSea, 'path', { d: wavePath(FRAME, W-FRAME, SEA_TOP + 96, 6, 48), class:'wave' });
+[[seaY + 34, 9, 220, .26], [seaY + 70, 13, 310, .34],
+ [seaY + 112, 17, 400, .42], [seaY + 158, 21, 500, .50]].forEach(([y, amp, step, op]) => {
+  add(gSea, 'path', { d: swell(FRAME, W-FRAME, y, amp, step), class:'wave', style:`opacity:${op}` });
+});
 
-// the steamship, a little larger now, and a boat off to the west
-const ship = add(gSea, 'g', { transform:`translate(${W - FRAME - 372}, ${SEA_TOP + 26}) scale(1.3)` });
-add(ship, 'path', { d:'M0 30 Q44 10 92 30 L82 40 Q44 34 8 40 Z', class:'ship' });
-add(ship, 'path', { d:'M50 10 L58 10 L56 -2 L52 -2 Z', class:'ship' });
-add(ship, 'path', { d:'M22 12 L21 -2 L25 -2 L26 12 Z', class:'ship' });
-add(ship, 'path', { d:'M56 -8 q3 -7 0 -14 q3 -7 0 -14', class:'wave' });
+// the numbers a chart writes beside the water, each over its own mark
+[['12', 0.08], ['40', 0.23], ['18', 0.38], ['7', 0.53]].forEach(([n, f]) => {
+  const x = FRAME + (W - FRAME*2) * f, y = seaY + 58;
+  txt(gSea, x, y, n, 'sounding');
+  add(gSea, 'circle', { cx:x - 16, cy:y - 3, r:1.1, class:'pip', style:'opacity:.4' });
+});
 
-const boat = add(gSea, 'g', { transform:`translate(${W * 0.60}, ${SEA_TOP + 74}) scale(0.66)` });
-add(boat, 'path', { d:'M0 20 Q34 4 70 20 L60 27 Q34 23 6 27 Z', class:'ship' });
-add(boat, 'path', { d:'M34 4 L34 -14', class:'wave' });
-add(boat, 'path', { d:'M34 -14 L52 -6 L34 0 Z', class:'ship' });
+// a three-masted ship: hull, then six sails, then the masts and yards drawn
+// over them so the silhouette reads as a ship and not as one dark mass
+(function ship(){
+  const g = add(gSea, 'g', { transform:`translate(${W - FRAME - 486}, ${seaY + 138}) scale(0.9)` });
+  add(g, 'path', { d:'M0 2 C8 20 42 32 96 34 C152 36 198 22 210 2 L220 -4 L204 -8 L8 -8 Z', class:'ship' });
+  add(g, 'path', { d:'M210 -2 L258 -14', class:'rig' });
+  const masts = [[44,-98],[112,-134],[172,-102]];
+  masts.forEach(([mx]) => {
+    add(g, 'path', { d:`M${mx-30} -34 Q${mx} -50 ${mx+30} -34 L${mx+26} -70 Q${mx} -86 ${mx-26} -70 Z`, class:'sail' });
+    add(g, 'path', { d:`M${mx-24} -78 Q${mx} -92 ${mx+24} -78 L${mx+21} -104 Q${mx} -118 ${mx-21} -104 Z`, class:'sail' });
+  });
+  masts.forEach(([mx, mt]) => {
+    add(g, 'path', { d:`M${mx} -6 L${mx} ${mt}`, class:'rig', style:'opacity:.8' });
+    add(g, 'path', { d:`M${mx-32} -34 H${mx+32}`, class:'rig', style:'opacity:.42' });
+    add(g, 'path', { d:`M${mx-27} -78 H${mx+27}`, class:'rig', style:'opacity:.42' });
+    add(g, 'path', { d:`M${mx-22} -104 H${mx+22}`, class:'rig', style:'opacity:.42' });
+  });
+  add(g, 'path', { d:'M44 -98 L210 -2', class:'rig' });
+  add(g, 'path', { d:'M112 -134 L8 -6', class:'rig' });
+  add(g, 'path', { d:'M112 -134 L210 -2', class:'rig' });
+  add(g, 'path', { d:'M112 -134 L142 -127 L112 -118 Z', class:'ship' });
+  add(g, 'path', { d:'M-40 30 q40 10 80 4', class:'sea-wake' });
+})();
 
-txt(gSea, FRAME + 24, SEA_TOP + 116, 'FOUR SOUNDINGS OF ONE DESCRIPTION', 'sea-label');
+// a small boat further west
+(function boat(){
+  const g = add(gSea, 'g', { transform:`translate(${W * 0.42}, ${seaY + 126})` });
+  add(g, 'path', { d:'M0 14 Q26 2 52 14 L44 20 Q26 17 6 20 Z', class:'ship' });
+  add(g, 'path', { d:'M26 2 L26 -18', class:'rig' });
+  add(g, 'path', { d:'M26 -18 L44 -8 L26 0 Z', class:'ship' });
+})();
+
+// a sea serpent, the ornament an old chart cannot resist
+(function serpent(){
+  const g = add(gSea, 'g', { transform:`translate(${W * 0.64}, ${seaY + 156})`, style:'opacity:.45' });
+  add(g, 'path', { d:'M0 0 q12 -14 24 0 q12 -14 24 0 q12 -14 24 0 q12 -10 24 -2', class:'rig' });
+  add(g, 'circle', { cx:96, cy:-2, r:2.2, class:'ship' });
+})();
+
+// the sheet's own voice, centred with a rule either side
+const seaLabelY = seaB - 26;
+const seaLabel = txt(gSea, W/2, seaLabelY, 'FOUR SOUNDINGS OF ONE DESCRIPTION', 'sea-label');
+seaLabel.setAttribute('text-anchor', 'middle');
+add(gSea, 'path', { d:`M${W/2 - 420} ${seaLabelY - 5} H${W/2 - 250}`, class:'rule' });
+add(gSea, 'path', { d:`M${W/2 + 250} ${seaLabelY - 5} H${W/2 + 420}`, class:'rule' });
+
+// the bottom edge: short longitude ticks, the chart's own measure
+for (let x = FRAME + 40; x < W - FRAME; x += 40){
+  const tall = ((x - FRAME) % 200) < 40;
+  add(gSea, 'path', { d:`M${x} ${seaB - 2} V${seaB - (tall ? 12 : 6)}`, class:'rule', style:'opacity:.32' });
+}
 
 // grain over everything ------------------------------------------------------
 add(svg, 'rect', { x:0, y:0, width:W, height:H, filter:'url(#grain)', opacity:'0.045',
@@ -714,22 +838,40 @@ function zoomAt(mx, my, k){
   apply();
 }
 
-let dragging = false, lastX = 0, lastY = 0;
+// A pan starts only after the pointer actually moves. A click on a link, a
+// chip or the install pill is left alone: below the threshold nothing is
+// captured, so the click lands on the control the reader meant.
+let dragging = false, pending = false, lastX = 0, lastY = 0, downX = 0, downY = 0;
 stage.addEventListener('pointerdown', e => {
-  cancelIntro(); touched = true;
-  dragging = true; lastX = e.clientX; lastY = e.clientY;
-  document.body.classList.add('dragging');
-  stage.setPointerCapture(e.pointerId);
+  if (e.button !== undefined && e.button !== 0) return;
+  pending = true; dragging = false;
+  downX = lastX = e.clientX; downY = lastY = e.clientY;
 });
 stage.addEventListener('pointermove', e => {
+  if (pending && !dragging){
+    if (Math.hypot(e.clientX - downX, e.clientY - downY) > 4){
+      dragging = true; pending = false;
+      cancelIntro(); touched = true;
+      document.body.classList.add('dragging');
+      try { stage.setPointerCapture(e.pointerId); } catch (_) {}
+    } else {
+      return;
+    }
+  }
   if (!dragging) return;
   tx += e.clientX - lastX; ty += e.clientY - lastY;
   lastX = e.clientX; lastY = e.clientY;
   apply();
 });
 stage.addEventListener('pointerup', e => {
-  dragging = false; document.body.classList.remove('dragging');
-  try { stage.releasePointerCapture(e.pointerId); } catch (_) {}
+  pending = false;
+  if (dragging){
+    dragging = false; document.body.classList.remove('dragging');
+    try { stage.releasePointerCapture(e.pointerId); } catch (_) {}
+  }
+});
+stage.addEventListener('pointercancel', () => {
+  pending = false; dragging = false; document.body.classList.remove('dragging');
 });
 stage.addEventListener('wheel', e => {
   e.preventDefault(); cancelIntro(); touched = true;
@@ -743,7 +885,11 @@ window.addEventListener('keydown', e => {
   else if (e.key === '+' || e.key === '=') zoomAt(r.width/2, r.height/2, 1.15);
   else if (e.key === '-') zoomAt(r.width/2, r.height/2, 1/1.15);
   else if (e.key === 'n' || e.key === 'N') setNight(!NIGHT_ON());
-  else if (e.key === 'Escape'){ pinned = -1; active = -1; paint(); }
+  else if (e.key === '?'){ openGuide(); }
+  else if (e.key === 'Escape'){
+    if (document.getElementById('guide').classList.contains('on')) closeGuide();
+    else { pinned = -1; active = -1; paint(); }
+  }
 });
 
 const CAM = location.search.match(/cam=([-\d.]+),([-\d.]+),([-\d.]+)/);
@@ -773,6 +919,82 @@ if (CAM){ s = +CAM[1]; tx = +CAM[2]; ty = +CAM[3]; apply(); }
 else fit();
 syncBars();
 paint();
+
+// ---------------------------------------------------------------------------
+// The guided tour. A reader who has never seen the sheet does not know that
+// the columns are clickable or that the rows are four projections; the tour
+// says so once, then lives behind the GUIDE pill and the "?" key.
+// ---------------------------------------------------------------------------
+const STEPS = [
+  { t:'The sheet', d:'One model, ten fields. Every count, column and width is typeset from the library itself — nothing on this page is drawn by hand.',
+    r:()=>({x:FRAME, y:FRAME, w:W-2*FRAME, h:H-2*FRAME}) },
+  { t:'Four readings', d:'Each row is one projection — JSON Schema, OpenAPI, SQL and GraphQL SDL. A projection that cannot carry a field says so with a red ×, never with an invented shape.',
+    r:()=>({x:BAR_X, y:HIT_TOP, w:BAR_RIGHT-BAR_X, h:MATRIX_BOTTOM-HIT_TOP}) },
+  { t:'A field, read four times', d:'Hover a column to trace it; click to pin it. Its four spellings then appear together in the footer.',
+    r:()=>({x:BAR_X, y:SPINE-46, w:BAR_RIGHT-BAR_X, h:74}) },
+  { t:'Quick start & the surface', d:'The packages, a copyable example, and the way on to the full API reference — every type and function, with the doc comment it was written with.',
+    r:()=>({x:cardB, y:NOTES_TOP, w:(W-FRAME-24)-cardB, h:NOTES_H}) },
+  { t:'The sea', d:'A chart by day. Press N, or click the edition mark, and the same sheet turns into its night edition.',
+    r:()=>({x:FRAME, y:seaY, w:W-2*FRAME, h:seaB-FRAME+4}) },
+];
+let curStep = 0;
+const guideEl = document.getElementById('guide');
+const spotEl = document.getElementById('spot');
+const cardEl = document.getElementById('gcard');
+
+function toScreen(r){
+  return { x: tx + r.x*s, y: ty + r.y*s, w: r.w*s, h: r.h*s };
+}
+function showStep(i){
+  curStep = i;
+  const r = toScreen(STEPS[i].r());
+  spotEl.style.left = r.x + 'px'; spotEl.style.top = r.y + 'px';
+  spotEl.style.width = Math.max(2, r.w) + 'px';
+  spotEl.style.height = Math.max(2, r.h) + 'px';
+  document.getElementById('gstep').textContent = (i + 1) + ' / ' + STEPS.length;
+  document.getElementById('gtitle').textContent = STEPS[i].t;
+  document.getElementById('gtext').textContent = STEPS[i].d;
+  document.getElementById('gnext').textContent = i === STEPS.length - 1 ? 'BEGIN' : 'NEXT';
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const cw = Math.min(440, vw * 0.86);
+  cardEl.style.width = cw + 'px';
+  cardEl.style.left = Math.max(20, Math.min(vw - cw - 20, r.x + r.w/2 - cw/2)) + 'px';
+  if (r.y + r.h/2 > vh * 0.56){ cardEl.style.top = '26px'; cardEl.style.bottom = 'auto'; }
+  else { cardEl.style.bottom = '26px'; cardEl.style.top = 'auto'; }
+}
+function openGuide(){
+  ['g-title','g-stamp','g-stats','g-head','g-json','g-openapi','g-sql','g-sdl','g-notes','g-foot','g-sea']
+    .forEach(id => { const g = document.getElementById(id); if (g) g.classList.add('shown'); });
+  cancelIntro();
+  if (!touched) fit();
+  guideEl.classList.add('on'); guideEl.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('guiding');
+  showStep(0);
+}
+function closeGuide(){
+  guideEl.classList.remove('on'); guideEl.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('guiding');
+  try { localStorage.setItem('mm-tour', '1'); } catch (e) {}
+}
+document.getElementById('gnext').addEventListener('click', () => {
+  if (curStep < STEPS.length - 1) showStep(curStep + 1); else closeGuide();
+});
+document.getElementById('gskip').addEventListener('click', closeGuide);
+document.getElementById('gtoggle').addEventListener('click', () => {
+  if (guideEl.classList.contains('on')) closeGuide(); else openGuide();
+});
+window.addEventListener('resize', () => {
+  if (guideEl.classList.contains('on')) showStep(curStep);
+});
+
+let seenTour = false;
+try { seenTour = !!localStorage.getItem('mm-tour'); } catch (e) {}
+if (location.search.includes('tour')) setTimeout(() => {
+  openGuide();
+  const m = location.search.match(/tour=(\d+)/);
+  if (m) showStep(Math.max(0, Math.min(STEPS.length - 1, +m[1] - 1)));
+}, 300);
+else if (!seenTour && !STATIC) setTimeout(openGuide, 500);
 </script>
 </body>
 </html>
