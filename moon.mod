@@ -1,6 +1,6 @@
 name = "moonbitstack/moonmodel"
 
-version = "0.1.2"
+version = "0.1.3"
 
 readme = "README.md"
 
@@ -39,7 +39,7 @@ keywords = [
 description = "One model description for MoonBit, projected to JSON Schema, OpenAPI, SQL and GraphQL."
 
 import {
-  "moonbitstack/moonast@0.2.3",
+  "moonbitstack/moonast@0.2.6",
   "moonbitlang/parser@0.4.6",
   "moonbitlang/async@0.22.5",
   "moonbitstack/moonschema@0.2.4",
