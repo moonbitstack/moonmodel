@@ -3,8 +3,8 @@
 One field description; JSON Schema, OpenAPI, SQL and GraphQL SDL are its
 projections.
 
-MoonBit already turns a struct into JSON and back — `derive(ToJson)`,
-`derive(FromJson)`, `@json`'s `JsonPath`. That is not what this is for.
+MoonBit already turns a struct into JSON and back — `#derive(ToJson)`,
+`#derive(FromJson)`, `@json`'s `JsonPath`. That is not what this is for.
 
 A service describes the same field four times over: once to check a request,
 once to document it, once to store it, once to serve it. Describe it once
