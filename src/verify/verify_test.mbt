@@ -141,3 +141,21 @@ test "a model that refers to itself is checkable on its own" {
   ])
   assert_true(@verify.valid(node, Json::object(Map([]))))
 }
+
+///|
+/// `Check::pattern` goes out as JSON Schema's `pattern`, which is an ECMA-262 expression
+/// matched anywhere in the string unless it is anchored.
+test "a pattern is a regular expression the value has to match" {
+  let slug = @moonmodel.Model::new("Page", [
+    @moonmodel.Field::new(
+      "slug",
+      Text,
+      check=@moonmodel.Check::new(pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"),
+    ),
+  ])
+  assert_true(@verify.valid(slug, { "slug": "moon-stack-2" }))
+  let faults = @verify.faults(slug, { "slug": "Moon Stack" })
+  assert_eq(faults.length(), 1)
+  assert_eq(faults[0].at, "/slug")
+  assert_eq(faults[0].keyword, "pattern")
+}
