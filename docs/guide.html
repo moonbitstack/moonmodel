@@ -101,6 +101,21 @@ pub struct User {
 pub struct Address {
   city : String
 }</pre></div>
+    <p><code>User::describe()</code> returns a <code>Model</code> — data, with nothing hidden behind it — so the same value can be written by hand, at run time or from a generator:</p>
+    <div class="code"><button class="copy" type="button">COPY</button><pre>let user = @moonmodel.Model::new(
+  "User",
+  [
+    @moonmodel.Field::new("id", Big, check=@moonmodel.Check::new(unique=true)),
+    @moonmodel.Field::new("name", Text, check=@moonmodel.Check::new(longest=64)),
+    @moonmodel.Field::new("age", Int, required=false, nullable=true),
+    @moonmodel.Field::new("home", Ref("Address")),
+  ],
+  doc="somebody with an account",
+)
+
+let address = @moonmodel.Model::new("Address", [
+  @moonmodel.Field::new("city", Text),
+])</pre></div>
   </section>
 
   <section class="sec" id="annotations">
@@ -131,29 +146,69 @@ pub struct Address {
   <section class="sec" id="projections">
     <h2>Four projections</h2>
     <p class="lead">Every projection takes the same value. A projection that cannot carry a field says so — it never invents a shape for it or fails.</p>
-    <div class="code"><button class="copy" type="button">COPY</button><pre>// JSON Schema 2020-12
-println(@json.of(User::describe()).stringify(indent=2))
-
-// an OpenAPI Schema Object, three dialects
-println(@open.of(User::describe(), dialect=@open.OpenApi30).stringify(indent=2))
-
-// columns and CREATE TABLE, three dialects
-println(@sql.table(User::describe(), dialect=@sql.Postgres))
-
-// GraphQL SDL
-let (sdl, skipped) = @sdl.of(User::describe())</pre></div>
+    <p>JSON Schema 2020-12 is the projection that loses least: a 64-bit integer is <code>format: int64</code>, an optional-and-nullable field is a union with <code>null</code>, and a field that names another model is a reference.</p>
+    <div class="code"><button class="copy" type="button">COPY</button><pre>assert_eq(@json.of(user), {
+  "type": "object",
+  "title": "User",
+  "description": "somebody with an account",
+  "properties": {
+    "id": { "type": "integer", "format": "int64" },
+    "name": { "type": "string", "maxLength": 64 },
+    "age": { "type": ["integer", "null"], "format": "int32" },
+    "home": { "$ref": "#/$defs/Address" },
+  },
+  "required": ["id", "name", "home"],
+})</pre></div>
+    <p>An OpenAPI 3.0 Schema Object says the same in its own dialect: nullability is a keyword rather than a type, and a reference points into the components.</p>
+    <div class="code"><button class="copy" type="button">COPY</button><pre>assert_eq(@open.of(user, dialect=@open.Dialect::OpenApi30), {
+  "type": "object",
+  "title": "User",
+  "description": "somebody with an account",
+  "properties": {
+    "id": { "type": "integer", "format": "int64" },
+    "name": { "type": "string", "maxLength": 64 },
+    "age": { "type": "integer", "format": "int32", "nullable": true },
+    "home": { "$ref": "#/components/schemas/Address" },
+  },
+  "required": ["id", "name", "home"],
+})</pre></div>
+    <p>SQL keeps the columns and drops the rest: a field that names another model needs its own table, so <code>home</code> is reported rather than quietly turned into text.</p>
+    <div class="code"><button class="copy" type="button">COPY</button><pre>assert_eq(@sql.table(user, dialect=@sql.Dialect::Postgres), (
+  #|CREATE TABLE User (
+  #|  id BIGINT NOT NULL UNIQUE,
+  #|  name TEXT NOT NULL CHECK (length(name) &lt;= 64),
+  #|  age INTEGER
+  #|)
+))</pre></div>
+    <p>GraphQL has no 64-bit integer — its <code>Int</code> is 32 bits by specification — so <code>id</code> is carried as a <code>String</code>, and <code>!</code> folds "required" and "not null" into one mark.</p>
+    <div class="code"><button class="copy" type="button">COPY</button><pre>let (sdl, skipped) = @sdl.of(user)
+assert_eq(sdl, (
+  #|"""
+  #|somebody with an account
+  #|"""
+  #|type User {
+  #|  id: String!
+  #|  name: String!
+  #|  age: Int
+  #|  home: Address!
+  #|}
+))
+assert_eq(skipped.length(), 0)</pre></div>
     <p class="muted">See the <a href="showcase.html">showcase</a> for the complete output of a model that uses every type and every check.</p>
   </section>
 
   <section class="sec" id="verify">
     <h2>Checking an instance</h2>
     <p class="lead">The description is what an instance is checked against, written out as JSON Schema and read by a validator that knows the specification — so the schema a reader sees and the schema a request is held to are the same one.</p>
-    <div class="code"><button class="copy" type="button">COPY</button><pre>fn conforms(user : Json) -> Bool {
-  let checker = @verify.schema(User::describe(), known=[Address::describe()]) catch {
-    _ => return false
-  }
-  checker.valid(user)
-}</pre></div>
+    <div class="code"><button class="copy" type="button">COPY</button><pre>let checker = @verify.schema(user, known=[address]) catch {
+  error => abort("the description is not a schema: \{error}")
+}
+let good : Json = { "id": 1, "name": "ada", "home": { "city": "Kyoto" } }
+let no_id : Json = { "name": "ada", "home": { "city": "Kyoto" } }
+assert_eq(checker.valid(good), true)
+assert_eq(checker.valid(no_id), false)
+let faults = checker.faults(no_id)
+assert_eq(faults[0].keyword, "required")</pre></div>
     <table>
       <tr><th>Call</th><th>Answers</th></tr>
       <tr><td>schema(model, known=…)</td><td>the model as a Schema, with every model it refers to</td></tr>

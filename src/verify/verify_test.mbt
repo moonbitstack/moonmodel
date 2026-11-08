@@ -159,3 +159,38 @@ test "a pattern is a regular expression the value has to match" {
   assert_eq(faults[0].at, "/slug")
   assert_eq(faults[0].keyword, "pattern")
 }
+
+///|
+/// The README's own example: its model, the two instances it checks, and the
+/// keyword its one fault names. The reference to `Address` is resolved from
+/// `known`, which is what lets the nested object be checked rather than
+/// waved through.
+test "the model the README checks answers what the README shows" {
+  let user = @moonmodel.Model::new(
+    "User",
+    [
+      @moonmodel.Field::new("id", Big, check=@moonmodel.Check::new(unique=true)),
+      @moonmodel.Field::new(
+        "name",
+        Text,
+        check=@moonmodel.Check::new(longest=64),
+      ),
+      @moonmodel.Field::new("age", Int, required=false, nullable=true),
+      @moonmodel.Field::new("home", Ref("Address")),
+    ],
+    doc="somebody with an account",
+  )
+  let address = @moonmodel.Model::new("Address", [
+    @moonmodel.Field::new("city", Text),
+  ])
+  let checker = @verify.schema(user, known=[address]) catch {
+    error => abort("the description is not a schema: \{error}")
+  }
+  let good : Json = { "id": 1, "name": "ada", "home": { "city": "Kyoto" } }
+  let no_id : Json = { "name": "ada", "home": { "city": "Kyoto" } }
+  assert_eq(checker.valid(good), true)
+  assert_eq(checker.valid(no_id), false)
+  let faults = checker.faults(no_id)
+  assert_eq(faults.length(), 1)
+  assert_eq(faults[0].keyword, "required")
+}

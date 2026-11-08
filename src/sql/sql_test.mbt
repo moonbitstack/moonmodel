@@ -247,3 +247,38 @@ test "a width narrows the column, or widens it where the sign does not fit" {
 test "a layout around an unstorable type has no column" {
   assert_eq(kind(Wire(@moonmodel.Layout::new(Dict(Text))), Postgres), "(none)")
 }
+
+///|
+/// The model the README projects, and the table it shows for it. `home` names
+/// another model, which is a table of its own rather than a column here, so
+/// the table has three columns and the projection has one thing to report.
+test "the model the README projects is the table it shows" {
+  let user = @moonmodel.Model::new(
+    "User",
+    [
+      @moonmodel.Field::new("id", Big, check=@moonmodel.Check::new(unique=true)),
+      @moonmodel.Field::new(
+        "name",
+        Text,
+        check=@moonmodel.Check::new(longest=64),
+      ),
+      @moonmodel.Field::new("age", Int, required=false, nullable=true),
+      @moonmodel.Field::new("home", Ref("Address")),
+    ],
+    doc="somebody with an account",
+  )
+  assert_eq(
+    @sql.table(user, dialect=Postgres),
+    (
+      #|CREATE TABLE User (
+      #|  id BIGINT NOT NULL UNIQUE,
+      #|  name TEXT NOT NULL CHECK (length(name) <= 64),
+      #|  age INTEGER
+      #|)
+    ),
+  )
+  let (columns, skipped) = @sql.of(user, dialect=Postgres)
+  assert_eq(columns.length(), 3)
+  assert_eq(skipped.length(), 1)
+  assert_eq(skipped[0].field, "home")
+}

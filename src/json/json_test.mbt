@@ -436,3 +436,39 @@ test "a model that refers to itself is repeated under $defs" {
     "$defs": Json::object({ "Node": written }),
   })
 }
+
+///|
+/// The model the README projects, and the document it shows for it.
+///
+/// The page is a promise to a reader, so the page is held to the projection
+/// here rather than the other way round: a change to either turns this red,
+/// and the document a reader sees cannot quietly stop being the one this
+/// version writes.
+test "the model the README projects is the document it shows" {
+  let user = @moonmodel.Model::new(
+    "User",
+    [
+      @moonmodel.Field::new("id", Big, check=@moonmodel.Check::new(unique=true)),
+      @moonmodel.Field::new(
+        "name",
+        Text,
+        check=@moonmodel.Check::new(longest=64),
+      ),
+      @moonmodel.Field::new("age", Int, required=false, nullable=true),
+      @moonmodel.Field::new("home", Ref("Address")),
+    ],
+    doc="somebody with an account",
+  )
+  assert_eq(@json.of(user), {
+    "type": "object",
+    "title": "User",
+    "description": "somebody with an account",
+    "properties": {
+      "id": { "type": "integer", "format": "int64" },
+      "name": { "type": "string", "maxLength": 64 },
+      "age": { "type": ["integer", "null"], "format": "int32" },
+      "home": { "$ref": "#/$defs/Address" },
+    },
+    "required": ["id", "name", "home"],
+  })
+}

@@ -272,3 +272,40 @@ test "a scalar inside a layout is declared once" {
   ])
   assert_true(@sdl.document([model][:]).contains("scalar DateTime"))
 }
+
+///|
+/// The model the README projects, and the type it shows for it. `Int64` is
+/// not GraphQL's 32-bit `Int`, so it is carried as a `String`; nothing here is
+/// left without a type, which is why the skipped list is empty.
+test "the model the README projects is the type it shows" {
+  let user = @moonmodel.Model::new(
+    "User",
+    [
+      @moonmodel.Field::new("id", Big, check=@moonmodel.Check::new(unique=true)),
+      @moonmodel.Field::new(
+        "name",
+        Text,
+        check=@moonmodel.Check::new(longest=64),
+      ),
+      @moonmodel.Field::new("age", Int, required=false, nullable=true),
+      @moonmodel.Field::new("home", Ref("Address")),
+    ],
+    doc="somebody with an account",
+  )
+  let (text, skipped) = @sdl.of(user)
+  assert_eq(
+    text,
+    (
+      #|"""
+      #|somebody with an account
+      #|"""
+      #|type User {
+      #|  id: String!
+      #|  name: String!
+      #|  age: Int
+      #|  home: Address!
+      #|}
+    ),
+  )
+  assert_eq(skipped.length(), 0)
+}

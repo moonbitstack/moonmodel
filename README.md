@@ -27,14 +27,99 @@ pub struct Address {
 }
 ```
 
-`User::describe()` is then the description, and every projection takes it:
+`User::describe()` is then the description, and every projection takes it. The
+method returns a `Model`, which is data and nothing else, so the same value can
+be written out by hand — at run time, or from a generator:
 
 ```moonbit
-// JSON Schema 2020-12, an OpenAPI Schema Object, CREATE TABLE, type User { … }
-println(@json.of(User::describe()).stringify(indent=2))
-println(@open.of(User::describe(), dialect=OpenApi30).stringify(indent=2))
-println(@sql.table(User::describe(), dialect=Postgres))
-println(@sdl.document([User::describe(), Address::describe()][:]))
+let user = @moonmodel.Model::new(
+  "User",
+  [
+    @moonmodel.Field::new("id", Big, check=@moonmodel.Check::new(unique=true)),
+    @moonmodel.Field::new("name", Text, check=@moonmodel.Check::new(longest=64)),
+    @moonmodel.Field::new("age", Int, required=false, nullable=true),
+    @moonmodel.Field::new("home", Ref("Address")),
+  ],
+  doc="somebody with an account",
+)
+
+let address = @moonmodel.Model::new("Address", [
+  @moonmodel.Field::new("city", Text),
+])
+```
+
+## Four projections
+
+JSON Schema 2020-12 is the one that loses least: a 64-bit integer is
+`format: int64`, an optional-and-nullable field is a union with `null`, and a
+field that names another model is a reference.
+
+```moonbit
+assert_eq(@json.of(user), {
+  "type": "object",
+  "title": "User",
+  "description": "somebody with an account",
+  "properties": {
+    "id": { "type": "integer", "format": "int64" },
+    "name": { "type": "string", "maxLength": 64 },
+    "age": { "type": ["integer", "null"], "format": "int32" },
+    "home": { "$ref": "#/$defs/Address" },
+  },
+  "required": ["id", "name", "home"],
+})
+```
+
+An OpenAPI 3.0 Schema Object says the same in its own dialect: nullability is a
+keyword rather than a type, and a reference points into the components.
+
+```moonbit
+assert_eq(@open.of(user, dialect=@open.Dialect::OpenApi30), {
+  "type": "object",
+  "title": "User",
+  "description": "somebody with an account",
+  "properties": {
+    "id": { "type": "integer", "format": "int64" },
+    "name": { "type": "string", "maxLength": 64 },
+    "age": { "type": "integer", "format": "int32", "nullable": true },
+    "home": { "$ref": "#/components/schemas/Address" },
+  },
+  "required": ["id", "name", "home"],
+})
+```
+
+SQL keeps the columns and drops the rest: a field that names another model
+needs its own table, so `home` is reported rather than quietly turned into
+text. `sql.of` returns both halves — the columns it wrote and the fields it
+could not.
+
+```moonbit
+assert_eq(@sql.table(user, dialect=@sql.Dialect::Postgres), (
+  #|CREATE TABLE User (
+  #|  id BIGINT NOT NULL UNIQUE,
+  #|  name TEXT NOT NULL CHECK (length(name) <= 64),
+  #|  age INTEGER
+  #|)
+))
+```
+
+GraphQL has no 64-bit integer — its `Int` is 32 bits by specification — so
+`id` is carried as a `String`, and `!` folds "required" and "not null" into one
+mark.
+
+```moonbit
+let (sdl, skipped) = @sdl.of(user)
+assert_eq(sdl, (
+  #|"""
+  #|somebody with an account
+  #|"""
+  #|type User {
+  #|  id: String!
+  #|  name: String!
+  #|  age: Int
+  #|  home: Address!
+  #|}
+))
+assert_eq(skipped.length(), 0)
 ```
 
 ## Annotations
@@ -81,35 +166,11 @@ list, `Map[String, T]` a dictionary, an annotated struct a `Ref`, and `@pkg.T` a
 `Ref` to the model named `T`. A type that says nothing is refused at build time,
 with the file and line, and so is a `kind=` word the vocabulary does not have.
 
-## Without annotations
-
-The annotations generate calls to this, and a model built at run time is
-written the same way:
-
-```moonbit
-let user = @moonmodel.Model::new(
-  "User",
-  [
-    @moonmodel.Field::new("id", Big, check=@moonmodel.Check::new(unique=true)),
-    @moonmodel.Field::new("name", Text, check=@moonmodel.Check::new(longest=64)),
-    @moonmodel.Field::new("age", Int, required=false, nullable=true),
-    @moonmodel.Field::new("home", Ref("Address")),
-  ],
-  doc="somebody with an account",
-)
-```
-
-A third way — the type carrying its own description — is what the annotation
-generates: `User::describe()` beside the struct. There is nothing else to
-implement, because a description is data and the method is the whole of it.
-
-`moon run src/examples/annotations` holds an annotated model to the same model
-written by hand, and `moon run src/examples/tour` runs all four projections and
-a check on one description that uses every part of the vocabulary.
-
-`moon run src/cmd/sheet` prints one description as a single JSON document —
-every field, four times over, with what each projection could not carry — which
-is what the project's front page is typeset from.
+The generated file is a `Model::new` call per type, which is why the two ways
+of saying it agree: `moon run src/examples/annotations` holds an annotated
+model to the same model written by hand, and `moon run src/examples/tour` runs
+all four projections and a check on one description that uses every part of the
+vocabulary.
 
 ## Install
 
@@ -138,6 +199,10 @@ import {
 | `moonmodel/verify` | a verdict on an instance | the JSON writer and a validator |
 
 A program that wants OpenAPI does not link the SQL writer.
+
+`moon run src/cmd/sheet` prints one description as a single JSON document —
+every field, four times over, with what each projection could not carry — which
+is what the project's front page is typeset from.
 
 ## The description
 
@@ -184,10 +249,19 @@ written where it stands or as an offset to somewhere else. `Layout` carries
 those four, so one description serves a codec as well as a schema:
 
 ```moonbit
-@moonmodel.Field::new(
+let counter = @moonmodel.Field::new(
   "count",
-  Wire(@moonmodel.Layout::new(Int, bits=16, unsigned=true)),
+  @moonmodel.Wire(
+    @moonmodel.Layout::new(
+      @moonmodel.Int,
+      bits=16,
+      unsigned=true,
+      order=@moonmodel.Order::Big,
+    ),
+  ),
 )
+assert_eq(counter.kind.word().unwrap_or("none"), "uint16-be")
+assert_eq(@moonmodel.Type::of_word("uint16-be").unwrap_or(@moonmodel.Any), counter.kind)
 ```
 
 |  Part  | Means |
@@ -218,12 +292,15 @@ JSON Schema and read by a validator that knows the specification, so the schema
 a reader sees and the schema a request is held to are the same one:
 
 ```moonbit
-fn conforms(user : Json) -> Bool {
-  let checker = @verify.schema(User::describe(), known=[Address::describe()]) catch {
-    _ => return false
-  }
-  checker.valid(user)
+let checker = @verify.schema(user, known=[address]) catch {
+  error => abort("the description is not a schema: \{error}")
 }
+let good : Json = { "id": 1, "name": "ada", "home": { "city": "Kyoto" } }
+let no_id : Json = { "name": "ada", "home": { "city": "Kyoto" } }
+assert_eq(checker.valid(good), true)
+assert_eq(checker.valid(no_id), false)
+let faults = checker.faults(no_id)
+assert_eq(faults[0].keyword, "required")
 ```
 
 |  Call  | Answers |

@@ -129,3 +129,36 @@ test "a title is written standalone and left out under a key" {
   guard named.get("User") is Some(Object(one)) else { fail("no User") }
   assert_eq(one.get("title"), None)
 }
+
+///|
+/// The same model as the README's, under the dialect the README shows. 3.0
+/// has no `null` type, so nullability becomes a keyword of its own, and a
+/// reference points into the components rather than into `$defs`.
+test "the model the README projects is the object it shows" {
+  let user = @moonmodel.Model::new(
+    "User",
+    [
+      @moonmodel.Field::new("id", Big, check=@moonmodel.Check::new(unique=true)),
+      @moonmodel.Field::new(
+        "name",
+        Text,
+        check=@moonmodel.Check::new(longest=64),
+      ),
+      @moonmodel.Field::new("age", Int, required=false, nullable=true),
+      @moonmodel.Field::new("home", Ref("Address")),
+    ],
+    doc="somebody with an account",
+  )
+  assert_eq(@open.of(user, dialect=OpenApi30), {
+    "type": "object",
+    "title": "User",
+    "description": "somebody with an account",
+    "properties": {
+      "id": { "type": "integer", "format": "int64" },
+      "name": { "type": "string", "maxLength": 64 },
+      "age": { "type": "integer", "format": "int32", "nullable": true },
+      "home": { "$ref": "#/components/schemas/Address" },
+    },
+    "required": ["id", "name", "home"],
+  })
+}
