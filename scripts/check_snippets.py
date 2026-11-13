@@ -1,4 +1,4 @@
-"""Compile every MoonBit block in README.md and docs/skills/*/SKILL.md against this module's source.
+"""Compile every MoonBit block in README.md, the skills and the site against this module's source.
 
 A reader pastes these blocks into a project, so each one has to compile as written. The blocks of
 one file are read in order, the way the page reads: a block may use a name that an earlier block of
@@ -9,6 +9,7 @@ Usage: python scripts/check_snippets.py [--moon moon] [file ...]
 """
 
 import argparse
+import html
 import re
 import shutil
 import subprocess
@@ -54,8 +55,16 @@ def packages(module, src, deps):
     return found
 
 
+HTML = re.compile(r'<pre class="mbt([^"]*)">(.*?)</pre>', re.S)
+
+
 def blocks(path):
     text = path.read_text(encoding="utf-8")
+    if path.suffix == ".html":
+        for m in HTML.finditer(text):
+            body = html.unescape(m.group(2))
+            yield text[: m.start(2)].count("\n") + 1, "native" in m.group(1), body
+        return
     for m in FENCE.finditer(text):
         if m.group(1) or "nocheck" in m.group(3):
             continue
@@ -95,7 +104,11 @@ def main():
         return 0
     subprocess.run([args.moon, "update"], cwd=ROOT, capture_output=True)
     aliases = packages(module, src, deps)
-    files = [Path(f) for f in args.files] or [ROOT / "README.md", *sorted((ROOT / "docs" / "skills").glob("*/SKILL.md"))]
+    files = [Path(f) for f in args.files] or [
+        ROOT / "README.md",
+        *sorted((ROOT / "docs" / "skills").glob("*/SKILL.md")),
+        *sorted((ROOT / "docs").glob("*.html")),
+    ]
     failed = 0
     for file in files:
         file = file if file.is_absolute() else ROOT / file

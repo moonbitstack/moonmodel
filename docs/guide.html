@@ -102,7 +102,7 @@ pub struct Address {
   city : String
 }</pre></div>
     <p><code>User::describe()</code> returns a <code>Model</code> — data, with nothing hidden behind it — so the same value can be written by hand, at run time or from a generator:</p>
-    <div class="code"><button class="copy" type="button">COPY</button><pre>let user = @moonmodel.Model::new(
+    <div class="code"><button class="copy" type="button">COPY</button><pre class="mbt">let user = @moonmodel.Model::new(
   "User",
   [
     @moonmodel.Field::new("id", Big, check=@moonmodel.Check::new(unique=true)),
@@ -146,8 +146,8 @@ let address = @moonmodel.Model::new("Address", [
   <section class="sec" id="projections">
     <h2>Four projections</h2>
     <p class="lead">Every projection takes the same value. A projection that cannot carry a field says so — it never invents a shape for it or fails.</p>
-    <p>JSON Schema 2020-12 is the projection that loses least: a 64-bit integer is <code>format: int64</code>, an optional-and-nullable field is a union with <code>null</code>, and a field that names another model is a reference.</p>
-    <div class="code"><button class="copy" type="button">COPY</button><pre>assert_eq(@json.of(user), {
+    <p>JSON Schema 2020-12 is the projection that loses least: a 64-bit integer is <code>format: int64</code>, an optional-and-nullable field is a union with <code>null</code>, and a field that names another model is a reference. A reference that may also be null becomes a choice between the two, because a pointer has no type of its own to widen.</p>
+    <div class="code"><button class="copy" type="button">COPY</button><pre class="mbt">assert_eq(@json.of(user), {
   "type": "object",
   "title": "User",
   "description": "somebody with an account",
@@ -160,7 +160,7 @@ let address = @moonmodel.Model::new("Address", [
   "required": ["id", "name", "home"],
 })</pre></div>
     <p>An OpenAPI 3.0 Schema Object says the same in its own dialect: nullability is a keyword rather than a type, and a reference points into the components.</p>
-    <div class="code"><button class="copy" type="button">COPY</button><pre>assert_eq(@open.of(user, dialect=@open.Dialect::OpenApi30), {
+    <div class="code"><button class="copy" type="button">COPY</button><pre class="mbt">assert_eq(@open.of(user, dialect=@open.Dialect::OpenApi30), {
   "type": "object",
   "title": "User",
   "description": "somebody with an account",
@@ -172,8 +172,8 @@ let address = @moonmodel.Model::new("Address", [
   },
   "required": ["id", "name", "home"],
 })</pre></div>
-    <p>SQL keeps the columns and drops the rest: a field that names another model needs its own table, so <code>home</code> is reported rather than quietly turned into text.</p>
-    <div class="code"><button class="copy" type="button">COPY</button><pre>assert_eq(@sql.table(user, dialect=@sql.Dialect::Postgres), (
+    <p>SQL keeps the columns and drops the rest: a field that names another model needs its own table, so <code>home</code> is reported rather than quietly turned into text. A table or column whose name the dialect reserves is quoted, so a model called <code>Order</code> with a field called <code>group</code> is still a table.</p>
+    <div class="code"><button class="copy" type="button">COPY</button><pre class="mbt">assert_eq(@sql.table(user, dialect=@sql.Dialect::Postgres), (
   #|CREATE TABLE User (
   #|  id BIGINT NOT NULL UNIQUE,
   #|  name TEXT NOT NULL CHECK (length(name) &lt;= 64),
@@ -181,7 +181,7 @@ let address = @moonmodel.Model::new("Address", [
   #|)
 ))</pre></div>
     <p>GraphQL has no 64-bit integer — its <code>Int</code> is 32 bits by specification — so <code>id</code> is carried as a <code>String</code>, and <code>!</code> folds "required" and "not null" into one mark.</p>
-    <div class="code"><button class="copy" type="button">COPY</button><pre>let (sdl, skipped) = @sdl.of(user)
+    <div class="code"><button class="copy" type="button">COPY</button><pre class="mbt">let (sdl, skipped) = @sdl.of(user)
 assert_eq(sdl, (
   #|"""
   #|somebody with an account
@@ -200,7 +200,7 @@ assert_eq(skipped.length(), 0)</pre></div>
   <section class="sec" id="verify">
     <h2>Checking an instance</h2>
     <p class="lead">The description is what an instance is checked against, written out as JSON Schema and read by a validator that knows the specification — so the schema a reader sees and the schema a request is held to are the same one.</p>
-    <div class="code"><button class="copy" type="button">COPY</button><pre>let checker = @verify.schema(user, known=[address]) catch {
+    <div class="code"><button class="copy" type="button">COPY</button><pre class="mbt">let checker = @verify.schema(user, known=[address]) catch {
   error => abort("the description is not a schema: \{error}")
 }
 let good : Json = { "id": 1, "name": "ada", "home": { "city": "Kyoto" } }
