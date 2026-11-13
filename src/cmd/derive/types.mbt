@@ -194,7 +194,7 @@ fn value(text : String, kind : Family, where_ : String) -> String raise {
     // A list, a mapping and a value of no shape at all are written as the
     // JSON they are: an attribute has no syntax of its own for them.
     Sequence | Mapping | Opaque => {
-      let parsed = @json.parse(text) catch {
+      let parsed = @moonjson.loads(text, @moonjson.strict) catch {
         _ => fail("\{where_}: `\{text}` is not JSON")
       }
       literal(parsed)

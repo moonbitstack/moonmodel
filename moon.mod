@@ -39,8 +39,9 @@ keywords = [
 description = "One model description for MoonBit, projected to JSON Schema, OpenAPI, SQL and GraphQL."
 
 import {
-  "moonbitstack/moonast@0.2.7",
-  "moonbitlang/parser@0.4.6",
+  "moonbitstack/moonast@0.3.0",
+  "moonbitstack/moonjson@0.5.0",
+  "moonbitlang/parser@0.4.8",
   "moonbitlang/async@0.22.5",
   "moonbitstack/moonschema@0.2.5",
 }

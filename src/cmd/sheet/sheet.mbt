@@ -95,21 +95,7 @@ fn Cell::new(lines : Array[String], spell : String, lost : String?) -> Cell {
 ///|
 /// A quoted JSON string.
 fn quoted(text : String) -> String {
-  let out = StringBuilder()
-  out.write_char('"')
-  for c in text {
-    if c == '"' {
-      out.write_string("\\\"")
-    } else if c == '\\' {
-      out.write_string("\\\\")
-    } else if c == '\n' {
-      out.write_string("\\n")
-    } else {
-      out.write_char(c)
-    }
-  }
-  out.write_char('"')
-  out.to_string()
+  @moonjson.dumps(Json::string(text))
 }
 
 ///|

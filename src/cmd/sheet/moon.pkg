@@ -10,4 +10,5 @@ import {
   "moonbitstack/moonmodel/sql",
   "moonbitstack/moonmodel/sdl",
   "moonbitstack/moonmodel/open",
+  "moonbitstack/moonjson",
 }
