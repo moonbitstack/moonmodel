@@ -52,7 +52,9 @@ let address = @moonmodel.Model::new("Address", [
 
 JSON Schema 2020-12 is the one that loses least: a 64-bit integer is
 `format: int64`, an optional-and-nullable field is a union with `null`, and a
-field that names another model is a reference.
+field that names another model is a reference. A reference that may also be
+null becomes a choice between the two, because a pointer has no type of its own
+to widen.
 
 ```moonbit
 assert_eq(@json.of(user), {
@@ -90,7 +92,8 @@ assert_eq(@open.of(user, dialect=@open.Dialect::OpenApi30), {
 SQL keeps the columns and drops the rest: a field that names another model
 needs its own table, so `home` is reported rather than quietly turned into
 text. `sql.of` returns both halves — the columns it wrote and the fields it
-could not.
+could not. A table or column whose name the dialect reserves is quoted, so a
+model called `Order` with a field called `group` is still a table.
 
 ```moonbit
 assert_eq(@sql.table(user, dialect=@sql.Dialect::Postgres), (
@@ -330,7 +333,7 @@ cannot.
 | JSON Schema | `unique`, which is about the collection and not the value; a layout's byte order and reference mark |
 | OpenAPI 2.0 | nullable has no keyword — written as `x-nullable`, which is what its tooling reads |
 | OpenAPI 2.0 / 3.0 | an open bound is a boolean beside the closed one, not a number |
-| SQL | `Dict`, `Nest` and `Ref` need their own table; `List` is a column only in Postgres; `Any` and `Raw` have no type; `pattern` is spelled three different ways; a byte order and a reference mark are not a column |
+| SQL | `Dict`, `Nest` and `Ref` need their own table; `List` is a column only in Postgres; `Any` and `Raw` have no type; `pattern` is spelled three different ways; a byte order and a reference mark are not a column; a name that only MySQL or PostgreSQL reserves is left bare, since the words quoted are the ones SQLite refuses |
 | GraphQL | `Dict`, `Nest`, `Any` and `Raw` have no type; no bound of any kind reaches the schema; a 64-bit or unsigned-wide number becomes a `String` |
 
 GraphQL has no date and no byte string, so both are custom scalars —

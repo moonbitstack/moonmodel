@@ -144,3 +144,7 @@ assert_eq(faults[0].keyword, "exclusiveMaximum")
   by whatever produced the float.
 - **`Raw(json)` is the last resort.** Nothing reads inside it: a projection
   either passes it through or reports that it cannot carry it.
+- **A name a dialect reserves is quoted for you** — a model called `Order` with
+  a field called `group` still becomes a table. The words come from SQLite, so a
+  name only MySQL or PostgreSQL reserves (`user`) is left bare; rename it or
+  write that column's DDL by hand.
