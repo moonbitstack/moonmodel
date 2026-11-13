@@ -80,7 +80,7 @@ pub fn of(
           null: !field.required || field.nullable,
           default: literal(field.default),
           unique: field.check.unique,
-          check: clause(field.name, field.check),
+          check: clause(identifier(dialect, field.name), field.check),
         })
       None => skipped.push({ field: field.name, why: unstorable(field.kind), })
     }
@@ -100,12 +100,12 @@ pub fn table(
   let table = if name == "" { model.name } else { name }
   let out = StringBuilder()
   out.write_string("CREATE TABLE ")
-  out.write_string(table)
+  out.write_string(identifier(dialect, table))
   out.write_string(" (\n")
   for i = 0; i < columns.length(); i = i + 1 {
     let one = columns[i]
     out.write_string("  ")
-    out.write_string(one.name)
+    out.write_string(identifier(dialect, one.name))
     out.write_string(" ")
     out.write_string(one.kind)
     if !one.null {
@@ -133,6 +133,47 @@ pub fn table(
   }
   out.write_string(")")
   out.to_string()
+}
+
+///|
+/// A name as this dialect writes it: bare when the dialect reads it as a name,
+/// quoted when it would read it as a keyword instead.
+///
+/// This is the difference between a table and a syntax error for a model called
+/// `Order`, and between a column and one for a field called `group`. The table
+/// of words is generated from the engine rather than transcribed, so it says
+/// exactly what SQLite refuses; MySQL and PostgreSQL reserve some of their own,
+/// and a name from their lists that SQLite takes is left bare.
+fn identifier(dialect : Dialect, name : String) -> String {
+  if plain(name) && !reserved.contains(name.to_lower()) {
+    return name
+  }
+  match dialect {
+    Mysql => "`" + name.replace(old="`", new="``") + "`"
+    _ => "\"" + name.replace(old="\"", new="\"\"") + "\""
+  }
+}
+
+///|
+/// Whether a name is one every dialect would read as a name and nothing else.
+fn plain(name : String) -> Bool {
+  let letters = name.to_array()
+  if letters.length() == 0 {
+    return false
+  }
+  for i, c in letters {
+    let letter = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+    let digit = c >= '0' && c <= '9'
+    let ok = if i == 0 {
+      letter || c == '_'
+    } else {
+      letter || digit || c == '_'
+    }
+    if !ok {
+      return false
+    }
+  }
+  true
 }
 
 ///|
