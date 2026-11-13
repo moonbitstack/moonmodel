@@ -1,0 +1,22 @@
+// Copyright 2026 Leo Cheng
+// SPDX-License-Identifier: Apache-2.0
+
+// The corpus and its projections, printed as one JSON document.
+//
+// Nothing here is part of the library: the models, the instances and the
+// probes exist so that a harness outside this module can hold what the four
+// projections write to a validator, a parser and an engine that know the
+// formats. Run it and read the document:
+//
+//     moon run src/cmd/conformance --target native
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonmodel",
+  "moonbitstack/moonmodel/json",
+  "moonbitstack/moonmodel/open",
+  "moonbitstack/moonmodel/sql",
+  "moonbitstack/moonmodel/sdl",
+  "moonbitstack/moonmodel/verify",
+  "moonbitstack/moonjson",
+}

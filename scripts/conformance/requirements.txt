@@ -1,0 +1,12 @@
+# The readers `scripts/conformance/check.py` holds this library's output to.
+#
+# Each is the reference implementation of one of the four formats — or, for
+# SQL, a parser and an engine — and none of them is ours, which is the whole
+# point: the run is evidence only while the second opinion comes from somewhere
+# else. Versions are pinned so a new release of a reader is a decision and not
+# a surprise.
+graphql-core==3.3.2
+jsonschema==4.26.0
+openapi-spec-validator==0.7.2
+pydantic==2.14.3
+sqlglot==27.29.0
