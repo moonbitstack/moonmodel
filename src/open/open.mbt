@@ -108,6 +108,25 @@ fn older(schema : Json, model : @moonmodel.Model, dialect : Dialect) -> Json {
         Some(Array(both)) => if both.length() > 0 { one["type"] = both[0] }
         _ => ()
       }
+      // A reference came back as a choice between itself and null, which is
+      // 2020-12's spelling. Neither older dialect has a null type, and 3.0
+      // ignores every sibling of `$ref`, so the value is written as the one
+      // case of an `allOf` and the flag is stated beside that.
+      match one.get("anyOf") {
+        Some(Array(parts)) => {
+          let kept = []
+          for part in parts {
+            if !is_null(part) {
+              kept.push(part)
+            }
+          }
+          if kept.length() == 1 {
+            one.remove("anyOf")
+            one["allOf"] = Json::array(kept)
+          }
+        }
+        _ => ()
+      }
       match dialect {
         Swagger20 => one["x-nullable"] = Json::boolean(true)
         _ => one["nullable"] = Json::boolean(true)
@@ -117,6 +136,12 @@ fn older(schema : Json, model : @moonmodel.Model, dialect : Dialect) -> Json {
   }
   fields["properties"] = Json::object(properties)
   Json::object(fields)
+}
+
+///|
+/// Whether a schema is the null type, which the older dialects do not have.
+fn is_null(schema : Json) -> Bool {
+  schema is Object(one) && one.get("type") is Some(String("null"))
 }
 
 ///|

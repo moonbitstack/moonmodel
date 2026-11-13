@@ -117,23 +117,16 @@ fn reachable(
 
 ///|
 /// One field: its type, its bounds, whatever was said about it.
+///
+/// `nullable` widens the value: 2020-12 says so by listing both types, which
+/// is the form OpenAPI 3.1 adopted too. A reference has no type of its own to
+/// widen — 2020-12 resolves it beside its siblings, not through them — so the
+/// choice is written out instead. An empty schema already takes null, and
+/// saying so twice would change nothing.
 fn property(field : @moonmodel.Field, at : String) -> Json {
   let out = shape(field.kind, at)
   match out {
     Object(fields) => {
-      if field.nullable {
-        // 2020-12 says a nullable value by listing both types, which is the
-        // form OpenAPI 3.1 adopted too. Draft 4 and OpenAPI 3.0 need a
-        // keyword of their own, which is `open`'s problem, not this one's.
-        match fields.get("type") {
-          Some(String(one)) =>
-            fields["type"] = Json::array([
-              Json::string(one),
-              Json::string("null"),
-            ])
-          _ => ()
-        }
-      }
       if field.doc != "" {
         fields["description"] = Json::string(field.doc)
       }
@@ -142,7 +135,38 @@ fn property(field : @moonmodel.Field, at : String) -> Json {
         None => ()
       }
       bounds(field.check, fields)
-      Json::object(fields)
+      if !field.nullable {
+        return Json::object(fields)
+      }
+      match fields.get("type") {
+        Some(String(one)) => {
+          fields["type"] = Json::array([Json::string(one), Json::string("null")])
+          Json::object(fields)
+        }
+        Some(_) => Json::object(fields)
+        None =>
+          if fields.is_empty() {
+            Json::object(fields)
+          } else {
+            // What is said about the field rather than about its type stays
+            // outside the choice, so a reader that shows the description of
+            // `x` finds it where it looked before.
+            let outer : Map[String, Json] = Map([])
+            let inner : Map[String, Json] = Map([])
+            for key, value in fields {
+              if key == "description" || key == "default" {
+                outer[key] = value
+              } else {
+                inner[key] = value
+              }
+            }
+            outer["anyOf"] = Json::array([
+              Json::object(inner),
+              Json::object(Map([("type", Json::string("null"))])),
+            ])
+            Json::object(outer)
+          }
+      }
     }
     other => other
   }
