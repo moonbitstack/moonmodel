@@ -192,3 +192,17 @@ a{color:inherit;text-decoration:none;}
 
 
 
+
+/* ============================================================================
+   PHONE — at 390 px the sea, the frame and the sheet's margins left the text a
+   170 px column and the title ran off the sheet. Below 600 px they shrink, the
+   title scales with the screen, a table scrolls inside its own box, and the
+   reference's toolbar scrolls in its row like the rows above it.
+   ============================================================================ */
+@media (width <= 600px){
+  html .wrap{padding:20px 12px 64px;}
+  html .sheet{padding:28px 18px;}
+  html h1{font-size:clamp(24px,9vw,40px);letter-spacing:.08em;}
+  html .sheet table{display:block;max-width:100%;overflow-x:auto;}
+  html .headrow .bar{flex:0 1 auto;min-width:0;overflow-x:auto;}
+}
