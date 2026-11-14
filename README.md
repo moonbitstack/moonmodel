@@ -131,7 +131,7 @@ assert_eq(skipped.length(), 0)
 
 <!-- nocheck -->
 ```
-rule(name: "model", command: "moonx moonbitstack/moonmodel/cmd/derive@0.1.3 -C \"$mod_dir\" \"$input\" -o \"$output\"")
+rule(name: "model", command: "moonx moonbitstack/moonmodel/cmd/derive@0.2.0 -C \"$mod_dir\" \"$input\" -o \"$output\"")
 ```
 
 and in the `moon.pkg` of the package holding the structs:
