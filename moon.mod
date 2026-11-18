@@ -49,7 +49,7 @@ description = "One model description for MoonBit, projected to JSON Schema, Open
 import {
   "moonbitstack/moonast@0.3.0",
   "moonbitstack/moonjson@0.5.0",
-  "moonbitlang/parser@0.4.8",
+  "moonbitlang/parser@0.4.9",
   "moonbitlang/async@0.22.5",
   "moonbitstack/moonschema@0.2.5",
 }
